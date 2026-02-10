@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageSquare, Eye, EyeOff, Download, ImagePlus, Loader2 } from "lucide-react";
+import { ArrowLeft, MessageSquare, Eye, EyeOff, Download, ImagePlus, Loader2, Copy } from "lucide-react";
 import type { Persona } from "@/lib/types";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -76,6 +76,9 @@ export default function PersonaDetail() {
             <h1 className="text-xl font-bold">{identity?.firstName} {identity?.lastName}</h1>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/create", { state: { scenario: persona.generation_prompt, purpose: persona.testing_purpose, variance: persona.variance_level } })} className="gap-1">
+              <Copy className="h-3 w-3" /> Clone
+            </Button>
             <Button variant="outline" size="sm" onClick={handleGeneratePortrait} disabled={generatingPortrait} className="gap-1">
               {generatingPortrait ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImagePlus className="h-3 w-3" />}
               {generatingPortrait ? "Generating..." : "Generate Portrait"}
