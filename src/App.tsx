@@ -35,19 +35,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      if (!isMounted) return;
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        checkAdmin().finally(() => { if (isMounted) setLoading(false); });
-      } else {
-        setLoading(false);
-      }
-    }).catch(() => {
-      if (isMounted) setLoading(false);
-    });
-
+    // Listener for ONGOING auth changes (does NOT control loading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       if (!isMounted) return;
       setSession(s);
@@ -58,6 +46,23 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAdmin(false);
       }
     });
+
+    // INITIAL load (controls loading)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        setSession(s);
+        setUser(s?.user ?? null);
+        if (s?.user) {
+          await checkAdmin();
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initializeAuth();
 
     return () => { isMounted = false; subscription.unsubscribe(); };
   }, []);
