@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Dices } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import pandaDollImg from "@/assets/panda-making-doll.png";
 
@@ -47,18 +47,49 @@ export default function CreatePersona() {
 
   const varianceLabels = ["", "Archetypal", "Archetypal", "Realistic", "Realistic", "Interesting", "Interesting", "Edge Case", "Edge Case", "Wild Card", "Wild Card"];
 
-  const handleGenerate = async () => {
+  const randomScenarios = [
+    { scenario: "A frustrated elderly customer trying to return a product they bought online but don't understand the return process.", purpose: "Test patience and clarity in customer support interactions." },
+    { scenario: "A teenager applying for their first part-time job at a fast food restaurant.", purpose: "Evaluate how hiring interfaces handle inexperienced applicants." },
+    { scenario: "A busy single parent trying to book a last-minute pediatric appointment through a health app.", purpose: "Identify UX friction for time-pressed users with urgent needs." },
+    { scenario: "A skeptical investor evaluating a new cryptocurrency trading platform.", purpose: "Test trust signals and risk communication in fintech products." },
+    { scenario: "A non-native English speaker trying to navigate a government benefits website.", purpose: "Assess accessibility and language barriers in civic tech." },
+    { scenario: "A small business owner setting up their first e-commerce store.", purpose: "Evaluate onboarding complexity for non-technical entrepreneurs." },
+    { scenario: "A college student comparing student loan refinancing options.", purpose: "Test financial literacy assumptions in lending products." },
+    { scenario: "A retiree learning to use video calling to stay in touch with grandchildren.", purpose: "Evaluate tech onboarding for low-digital-literacy users." },
+    { scenario: "A freelance graphic designer negotiating project scope with a difficult client.", purpose: "Test conflict resolution and communication tools." },
+    { scenario: "A fitness enthusiast tracking macros and workouts across multiple apps.", purpose: "Evaluate data integration and habit-tracking UX." },
+    { scenario: "A refugee family navigating a housing assistance application.", purpose: "Test empathy and cultural sensitivity in social services." },
+    { scenario: "A visually impaired user trying to order groceries through a delivery app.", purpose: "Assess screen reader compatibility and accessibility." },
+  ];
+
+  const handleRollDice = () => {
+    const random = randomScenarios[Math.floor(Math.random() * randomScenarios.length)];
+    const randomVariance = Math.floor(Math.random() * 10) + 1;
+    const randomCount = Math.floor(Math.random() * 3) + 1;
+    setScenario(random.scenario);
+    setPurpose(random.purpose);
+    setVariance([randomVariance]);
+    setCount(randomCount);
+    // Generate directly with the random values to avoid stale state
+    doGenerate(random.scenario, random.purpose, randomVariance, randomCount);
+  };
+
+  const handleGenerate = () => {
     if (!scenario.trim() || !purpose.trim()) {
       toast({ title: "Please fill in both fields", variant: "destructive" });
       return;
     }
+    doGenerate(scenario, purpose, variance[0], count);
+  };
+
+  const doGenerate = async (s: string, p: string, v: number, c: number) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-persona", {
-        body: { scenario, purpose, varianceLevel: variance[0], count },
+        body: { scenario: s, purpose: p, varianceLevel: v, count: c },
       });
       if (error) throw error;
-      toast({ title: `${count} persona${count > 1 ? "s" : ""} created! 🎉` });
+      toast({ title: `${c} persona${c > 1 ? "s" : ""} created! 🎉` });
       navigate("/");
     } catch (e: any) {
       toast({ title: "Generation failed", description: e.message, variant: "destructive" });
@@ -140,10 +171,15 @@ export default function CreatePersona() {
               />
             </div>
 
-            <Button onClick={handleGenerate} disabled={loading} className="w-full gap-2" size="lg">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {loading ? "Generating..." : `Generate ${count} Persona${count > 1 ? "s" : ""}`}
-            </Button>
+            <div className="flex gap-3">
+              <Button onClick={handleGenerate} disabled={loading} className="flex-1 gap-2" size="lg">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {loading ? "Generating..." : `Generate ${count} Persona${count > 1 ? "s" : ""}`}
+              </Button>
+              <Button onClick={handleRollDice} disabled={loading} variant="secondary" className="gap-2" size="lg">
+                <Dices className="h-4 w-4" /> Roll the Dice 🎲
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </main>
