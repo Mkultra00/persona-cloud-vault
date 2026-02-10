@@ -140,12 +140,10 @@ export default function Chat() {
   const sendingRef = useRef(false);
 
   const handleSend = async () => {
-    console.log("[handleSend] called, sendingRef:", sendingRef.current, "sending:", sending);
-    if (sendingRef.current || sending) return;
+    if (sendingRef.current) return;
     if ((!input.trim() && attachments.length === 0) || !conversationId || !personaId) return;
     sendingRef.current = true;
     setSending(true);
-    console.log("[handleSend] proceeding with send");
     const userMessage = input.trim();
     const currentAttachments = [...attachments];
     setInput("");
