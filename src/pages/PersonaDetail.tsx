@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageSquare, Eye, EyeOff, Download } from "lucide-react";
+import { ArrowLeft, MessageSquare, Eye, EyeOff, Download, ImagePlus, Loader2 } from "lucide-react";
 import type { Persona } from "@/lib/types";
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function PersonaDetail() {
   const { id } = useParams();
@@ -14,6 +16,25 @@ export default function PersonaDetail() {
   const [showPsych, setShowPsych] = useState(false);
   const [showBackstory, setShowBackstory] = useState(false);
   const [showAgenda, setShowAgenda] = useState(false);
+  const [generatingPortrait, setGeneratingPortrait] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleGeneratePortrait = async () => {
+    if (!persona) return;
+    setGeneratingPortrait(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-portrait", {
+        body: { personaId: persona.id },
+      });
+      if (error) throw error;
+      toast({ title: "Portrait generated!" });
+      queryClient.invalidateQueries({ queryKey: ["persona", id] });
+    } catch (e: any) {
+      toast({ title: "Portrait generation failed", description: e.message, variant: "destructive" });
+    } finally {
+      setGeneratingPortrait(false);
+    }
+  };
 
   const { data: persona, isLoading } = useQuery({
     queryKey: ["persona", id],
@@ -55,6 +76,10 @@ export default function PersonaDetail() {
             <h1 className="text-xl font-bold">{identity?.firstName} {identity?.lastName}</h1>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleGeneratePortrait} disabled={generatingPortrait} className="gap-1">
+              {generatingPortrait ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImagePlus className="h-3 w-3" />}
+              {generatingPortrait ? "Generating..." : "Generate Portrait"}
+            </Button>
             <Button variant="outline" size="sm" onClick={exportOne} className="gap-1">
               <Download className="h-3 w-3" /> Export
             </Button>
@@ -66,12 +91,21 @@ export default function PersonaDetail() {
       </header>
 
       <main className="container mx-auto max-w-4xl px-4 py-8 space-y-6">
-        {/* Identity Card */}
+        {/* Portrait + Identity Card */}
         <Card>
           <CardHeader>
             <CardTitle>Identity</CardTitle>
           </CardHeader>
           <CardContent>
+            {persona.portrait_url && (
+              <div className="mb-4 flex justify-center">
+                <img
+                  src={persona.portrait_url}
+                  alt={`${identity?.firstName} ${identity?.lastName}`}
+                  className="h-40 w-40 rounded-full object-cover border-2 border-border"
+                />
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <Field label="Age" value={identity?.age} />
               <Field label="Gender" value={identity?.gender} />
