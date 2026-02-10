@@ -162,9 +162,47 @@ export default function PersonaDetail() {
             </CardTitle>
           </CardHeader>
           {showBackstory && (
-            <CardContent className="space-y-4 text-sm">
+            <CardContent className="space-y-6 text-sm">
               <p className="text-foreground whitespace-pre-wrap">{backstory?.lifeNarrative}</p>
               <Field label="Current Situation" value={backstory?.currentLifeSituation} />
+
+              {/* Education History */}
+              {backstory?.educationHistory?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">🎓 Education History</p>
+                  <div className="space-y-3">
+                    {backstory.educationHistory.map((edu: any, i: number) => (
+                      <div key={i} className="border border-border rounded-lg p-3 bg-muted/30">
+                        <p className="font-medium text-foreground">{edu.degree} in {edu.fieldOfStudy}</p>
+                        <p className="text-muted-foreground">{edu.institution}</p>
+                        <p className="text-xs text-muted-foreground">{edu.yearStarted} – {edu.yearEnded ?? "Present"}</p>
+                        {edu.highlights?.length > 0 && (
+                          <ul className="mt-1 list-disc list-inside text-xs text-muted-foreground">
+                            {edu.highlights.map((h: string, j: number) => <li key={j}>{h}</li>)}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Occupation History */}
+              {backstory?.occupationHistory?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">💼 Occupation History</p>
+                  <div className="space-y-3">
+                    {backstory.occupationHistory.map((job: any, i: number) => (
+                      <div key={i} className="border border-border rounded-lg p-3 bg-muted/30">
+                        <p className="font-medium text-foreground">{job.title}</p>
+                        <p className="text-muted-foreground">{job.employer}</p>
+                        <p className="text-xs text-muted-foreground">{job.yearStarted} – {job.yearEnded ?? "Present"}</p>
+                        {job.description && <p className="mt-1 text-xs text-muted-foreground">{job.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           )}
         </Card>
@@ -180,6 +218,8 @@ export default function PersonaDetail() {
           {showAgenda && (
             <CardContent className="space-y-3 text-sm">
               <Field label="Hidden Agenda" value={psych?.hiddenAgenda} />
+              <Field label="Mental Health Challenges" value={psych?.mentalHealthChallenges?.join(", ")} />
+              <Field label="Physical Health Challenges" value={psych?.physicalHealthChallenges?.join(", ")} />
               <Field label="Internal Biases" value={psych?.internalBiases?.join(", ")} />
               <Field label="Fears" value={psych?.fears?.join(", ")} />
               <Field label="Frustrations" value={psych?.frustrations?.join(", ")} />
