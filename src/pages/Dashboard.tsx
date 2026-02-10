@@ -129,12 +129,7 @@ export default function Dashboard() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       {p.portrait_url ? (
-                        <div className="relative">
-                          <img src={p.portrait_url} alt={getPersonaName(p)} className="h-10 w-10 rounded-full object-cover border border-border transition-transform duration-200 group-hover:scale-110" />
-                          <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 opacity-0 scale-95 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100">
-                            <img src={p.portrait_url} alt={getPersonaName(p)} className="h-40 w-40 rounded-xl object-cover border-2 border-border shadow-lg" />
-                          </div>
-                        </div>
+                        <img src={p.portrait_url} alt={getPersonaName(p)} className="h-10 w-10 rounded-full object-cover border border-border" />
                       ) : (
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-lg">
                           {getMoodEmoji(p)}
