@@ -11,7 +11,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { scenario, purpose, varianceLevel, count } = await req.json();
+    const { scenario, purpose, varianceLevel, count, knowledgeAttachments } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -84,6 +84,19 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
       .map((p: any) => p.identity?.firstName)
       .filter(Boolean);
 
+    // Build knowledge context from attachments
+    let knowledgeContext = "";
+    const imageAttachments: { type: string; image_url: { url: string } }[] = [];
+    if (knowledgeAttachments && knowledgeAttachments.length > 0) {
+      for (const att of knowledgeAttachments) {
+        if (att.type === "document" && att.textContent) {
+          knowledgeContext += `\n\n--- Document: ${att.name} ---\n${att.textContent}`;
+        } else if (att.type === "image" && att.url) {
+          imageAttachments.push({ type: "image_url", image_url: { url: att.url } });
+        }
+      }
+    }
+
     // Step 1: Research phase — gather contextual knowledge about the scenario
     console.log("Starting research phase for scenario:", scenario);
     const researchPrompt = `You are a research analyst. Given a scenario and testing purpose, produce a detailed research brief that will help create realistic personas. Cover:
@@ -95,11 +108,16 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
 5. **Edge Cases**: Unusual but realistic profiles that might exist in this scenario — people who defy stereotypes or have unexpected backgrounds.
 6. **Current Trends**: Any relevant societal, technological, or economic trends that would shape these personas today.
 
-Be specific and data-informed. Use your knowledge to ground the research in reality.`;
+Be specific and data-informed. Use your knowledge to ground the research in reality.${knowledgeContext ? " Pay special attention to the attached documents/images as they contain domain-specific knowledge." : ""}`;
+
+    const researchUserContent: any[] = [
+      { type: "text", text: `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}${knowledgeContext ? `\n\nATTACHED KNOWLEDGE:\n${knowledgeContext}` : ""}\n\nProvide a comprehensive research brief.` },
+      ...imageAttachments,
+    ];
 
     const researchResponse = await fetchAICompletion(providerConfig, [
       { role: "system", content: researchPrompt },
-      { role: "user", content: `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\nProvide a comprehensive research brief.` },
+      { role: "user", content: researchUserContent.length === 1 ? researchUserContent[0].text : researchUserContent },
     ]);
 
     let researchBrief = "";
@@ -117,11 +135,16 @@ Be specific and data-informed. Use your knowledge to ground the research in real
     const newNames: string[] = [];
 
     for (let i = 0; i < actualCount; i++) {
-      const userContent = `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\n${researchBrief ? `RESEARCH BRIEF (use this to ground the persona in reality):\n${researchBrief}\n\n` : ""}Generate persona ${i + 1} of ${actualCount}. Each persona should be unique and grounded in the research above.\n\nIMPORTANT: Do NOT use any of these first names (they are already taken): ${[...existingNames, ...newNames].join(", ") || "none yet"}`;
+      const genTextContent = `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\n${researchBrief ? `RESEARCH BRIEF (use this to ground the persona in reality):\n${researchBrief}\n\n` : ""}${knowledgeContext ? `ATTACHED KNOWLEDGE:\n${knowledgeContext}\n\n` : ""}Generate persona ${i + 1} of ${actualCount}. Each persona should be unique and grounded in the research above.\n\nIMPORTANT: Do NOT use any of these first names (they are already taken): ${[...existingNames, ...newNames].join(", ") || "none yet"}`;
+
+      const genUserContent: any[] = [
+        { type: "text", text: genTextContent },
+        ...imageAttachments,
+      ];
 
       const response = await fetchAICompletion(providerConfig, [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
+        { role: "user", content: genUserContent.length === 1 ? genUserContent[0].text : genUserContent },
       ]);
 
       if (!response.ok) {

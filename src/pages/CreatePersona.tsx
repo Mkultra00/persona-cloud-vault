@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Sparkles, Loader2, Dices } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Dices, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import pandaVideo from "@/assets/panda-making-doll-loop.mp4";
+
+interface KnowledgeFile {
+  file: File;
+  name: string;
+  type: "image" | "document";
+  preview?: string;
+  textContent?: string;
+}
 
 export default function CreatePersona() {
   const navigate = useNavigate();
@@ -22,6 +30,8 @@ export default function CreatePersona() {
   const [count, setCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const [buildStep, setBuildStep] = useState(0);
+  const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const buildSteps = [
@@ -62,6 +72,48 @@ export default function CreatePersona() {
     { scenario: "A visually impaired user trying to order groceries through a delivery app.", purpose: "Assess screen reader compatibility and accessibility." },
   ];
 
+  const handleFilesAdded = useCallback(async (files: FileList | File[]) => {
+    const newFiles: KnowledgeFile[] = [];
+    for (const file of Array.from(files)) {
+      const isImage = file.type.startsWith("image/");
+      const isDoc = file.type === "application/pdf" || file.type.includes("text") || file.type.includes("json") ||
+        file.type.includes("markdown") || file.name.endsWith(".md") || file.name.endsWith(".txt") || file.name.endsWith(".csv");
+
+      if (!isImage && !isDoc) {
+        toast({ title: `Unsupported file: ${file.name}`, description: "Use images, PDFs, or text files.", variant: "destructive" });
+        continue;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        toast({ title: `File too large: ${file.name}`, description: "Max 20MB per file.", variant: "destructive" });
+        continue;
+      }
+
+      const kf: KnowledgeFile = { file, name: file.name, type: isImage ? "image" : "document" };
+
+      if (isImage) {
+        kf.preview = URL.createObjectURL(file);
+      } else {
+        // Read text content client-side
+        kf.textContent = await file.text();
+      }
+      newFiles.push(kf);
+    }
+    setKnowledgeFiles((prev) => [...prev, ...newFiles]);
+  }, []);
+
+  const removeFile = (idx: number) => {
+    setKnowledgeFiles((prev) => {
+      const removed = prev[idx];
+      if (removed.preview) URL.revokeObjectURL(removed.preview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files.length) handleFilesAdded(e.dataTransfer.files);
+  }, [handleFilesAdded]);
+
   const handleRollDice = () => {
     const random = randomScenarios[Math.floor(Math.random() * randomScenarios.length)];
     const randomVariance = Math.floor(Math.random() * 10) + 1;
@@ -70,7 +122,6 @@ export default function CreatePersona() {
     setPurpose(random.purpose);
     setVariance([randomVariance]);
     setCount(randomCount);
-    // Generate directly with the random values to avoid stale state
     doGenerate(random.scenario, random.purpose, randomVariance, randomCount);
   };
 
@@ -82,11 +133,33 @@ export default function CreatePersona() {
     doGenerate(scenario, purpose, variance[0], count);
   };
 
+  const uploadFilesToStorage = async (files: KnowledgeFile[]) => {
+    const uploaded: { type: string; name: string; url?: string; textContent?: string }[] = [];
+    for (const kf of files) {
+      if (kf.type === "image") {
+        const ext = kf.file.name.split(".").pop() || "png";
+        const path = `knowledge/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from("chat-attachments").upload(path, kf.file, { contentType: kf.file.type });
+        if (!error) {
+          const { data: { publicUrl } } = supabase.storage.from("chat-attachments").getPublicUrl(path);
+          uploaded.push({ type: "image", name: kf.name, url: publicUrl });
+        }
+      } else {
+        uploaded.push({ type: "document", name: kf.name, textContent: kf.textContent });
+      }
+    }
+    return uploaded;
+  };
+
   const doGenerate = async (s: string, p: string, v: number, c: number) => {
     setLoading(true);
     try {
+      let knowledgeAttachments: any[] = [];
+      if (knowledgeFiles.length > 0) {
+        knowledgeAttachments = await uploadFilesToStorage(knowledgeFiles);
+      }
       const { data, error } = await supabase.functions.invoke("generate-persona", {
-        body: { scenario: s, purpose: p, varianceLevel: v, count: c },
+        body: { scenario: s, purpose: p, varianceLevel: v, count: c, knowledgeAttachments },
       });
       if (error) throw error;
       toast({ title: `${c} persona${c > 1 ? "s" : ""} created! 🎉` });
@@ -157,6 +230,57 @@ export default function CreatePersona() {
               <p className="text-xs text-muted-foreground">
                 Low = archetypal match. High = edge cases & surprises.
               </p>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Knowledge Attachments</Label>
+              <div
+                onDrop={handleDrop}
+                onDragOver={(e) => e.preventDefault()}
+                className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.txt,.md,.csv,.json"
+                  className="hidden"
+                  onChange={(e) => e.target.files && handleFilesAdded(e.target.files)}
+                />
+                <Paperclip className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Drag & drop files or click to browse
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Images, PDFs, text files — used as context for persona generation
+                </p>
+              </div>
+
+              {knowledgeFiles.length > 0 && (
+                <div className="space-y-2">
+                  {knowledgeFiles.map((kf, idx) => (
+                    <div key={idx} className="flex items-center gap-3 rounded-md border border-border bg-muted/30 p-2">
+                      {kf.type === "image" && kf.preview ? (
+                        <img src={kf.preview} alt={kf.name} className="h-10 w-10 rounded object-cover" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded bg-muted">
+                          <FileText className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{kf.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {kf.type === "image" ? "Image" : "Document"} · {(kf.file.size / 1024).toFixed(0)} KB
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeFile(idx)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
