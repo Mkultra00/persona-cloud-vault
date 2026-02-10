@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Sparkles, Loader2, Dices } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import pandaDollImg from "@/assets/panda-making-doll.png";
+import pandaVideo from "@/assets/panda-making-doll-loop.mp4";
 
 export default function CreatePersona() {
   const navigate = useNavigate();
@@ -187,11 +187,14 @@ export default function CreatePersona() {
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="flex flex-col items-center gap-5 rounded-2xl bg-card p-10 shadow-2xl border border-border animate-scale-in min-w-[340px]">
-            <img
-              src={pandaDollImg}
-              alt="Panda assembling a persona"
-              className="h-40 w-40 object-contain animate-bounce"
-            />
+             <video
+               src={pandaVideo}
+               autoPlay
+               loop
+               muted
+               playsInline
+               className="h-40 w-40 object-contain rounded-xl"
+             />
             <p className="text-lg font-bold text-foreground">Building your persona{count > 1 ? "s" : ""}...</p>
 
             <div className="w-full space-y-2">
