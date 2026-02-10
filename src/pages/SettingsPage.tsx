@@ -35,9 +35,8 @@ export default function SettingsPage() {
   }, [settings]);
 
   const chatProvider = getProviderForModel(chatModel);
-  const personaProvider = getProviderForModel(personaModel);
-  const needsOpenai = chatProvider === "openai" || personaProvider === "openai";
-  const needsGoogle = chatProvider === "google" || personaProvider === "google";
+  const needsOpenai = chatProvider === "openai";
+  const needsGoogle = chatProvider === "google";
 
   const lovableModels = AI_MODELS.filter((m) => m.provider === "lovable");
   const openaiModels = AI_MODELS.filter((m) => m.provider === "openai");
@@ -47,7 +46,7 @@ export default function SettingsPage() {
     upsert.mutate({
       ai_provider: chatProvider,
       ai_model: chatModel,
-      persona_ai_provider: personaProvider,
+      persona_ai_provider: "lovable",
       persona_ai_model: personaModel,
       openai_api_key: openaiKey,
       google_api_key: googleKey,
@@ -110,17 +109,21 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Persona Generation AI Model</CardTitle>
+            <CardTitle>Persona Generation AI</CardTitle>
             <CardDescription>
-              Choose the AI model for generating new personas. Can differ from the chat model.
+              Persona generation uses Lovable AI. Select a model below.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <Label>Model</Label>
-            <ModelSelect value={personaModel} onChange={setPersonaModel} />
-            {personaProvider !== "lovable" && (
-              <p className="text-xs text-amber-500">⚠️ This model requires your own {personaProvider === "openai" ? "OpenAI" : "Google"} API key (see below).</p>
-            )}
+            <Select value={personaModel} onValueChange={setPersonaModel}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {lovableModels.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
 
