@@ -1,16 +1,10 @@
 // Shared AI client that routes to the correct provider
-export interface AIRequestOptions {
-  model: string;
-  messages: { role: string; content: any }[];
-  stream?: boolean;
-  modalities?: string[];
-}
-
 export interface ProviderConfig {
   provider: string;
   model: string;
   openaiApiKey?: string;
   googleApiKey?: string;
+  anthropicApiKey?: string;
 }
 
 export async function fetchAICompletion(
@@ -18,7 +12,7 @@ export async function fetchAICompletion(
   messages: { role: string; content: any }[],
   options: { stream?: boolean; modalities?: string[] } = {}
 ): Promise<Response> {
-  const { provider, model, openaiApiKey, googleApiKey } = config;
+  const { provider, model, openaiApiKey, googleApiKey, anthropicApiKey } = config;
 
   if (provider === "openai") {
     if (!openaiApiKey) throw new Error("OpenAI API key not configured. Go to Settings to add it.");
@@ -34,7 +28,6 @@ export async function fetchAICompletion(
 
   if (provider === "google") {
     if (!googleApiKey) throw new Error("Google Gemini API key not configured. Go to Settings to add it.");
-    // Use OpenAI-compatible endpoint for Gemini
     return fetch(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, {
       method: "POST",
       headers: {
@@ -42,6 +35,34 @@ export async function fetchAICompletion(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ model, messages, stream: options.stream ?? false }),
+    });
+  }
+
+  if (provider === "anthropic") {
+    if (!anthropicApiKey) throw new Error("Anthropic API key not configured. Go to Settings to add it.");
+    // Convert OpenAI-style messages to Anthropic format
+    const systemMsg = messages.find((m) => m.role === "system");
+    const nonSystemMsgs = messages.filter((m) => m.role !== "system").map((m) => ({
+      role: m.role === "persona" ? "assistant" : m.role,
+      content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+    }));
+
+    const body: any = {
+      model,
+      max_tokens: 4096,
+      messages: nonSystemMsgs,
+      stream: options.stream ?? false,
+    };
+    if (systemMsg) body.system = typeof systemMsg.content === "string" ? systemMsg.content : JSON.stringify(systemMsg.content);
+
+    return fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": anthropicApiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
   }
 
@@ -71,7 +92,7 @@ export async function getProviderConfig(
 
   const { data: settings } = await supabase
     .from("admin_settings")
-    .select("ai_provider, ai_model, persona_ai_provider, persona_ai_model, openai_api_key, google_api_key")
+    .select("ai_provider, ai_model, persona_ai_provider, persona_ai_model, openai_api_key, google_api_key, anthropic_api_key")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -85,5 +106,6 @@ export async function getProviderConfig(
     model: model || "google/gemini-3-flash-preview",
     openaiApiKey: settings.openai_api_key || undefined,
     googleApiKey: settings.google_api_key || undefined,
+    anthropicApiKey: settings.anthropic_api_key || undefined,
   };
 }

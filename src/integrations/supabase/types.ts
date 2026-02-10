@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           ai_model: string
           ai_provider: string
+          anthropic_api_key: string | null
           created_at: string
           google_api_key: string | null
           id: string
@@ -30,6 +31,7 @@ export type Database = {
         Insert: {
           ai_model?: string
           ai_provider?: string
+          anthropic_api_key?: string | null
           created_at?: string
           google_api_key?: string | null
           id?: string
@@ -42,6 +44,7 @@ export type Database = {
         Update: {
           ai_model?: string
           ai_provider?: string
+          anthropic_api_key?: string | null
           created_at?: string
           google_api_key?: string | null
           id?: string

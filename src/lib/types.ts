@@ -120,6 +120,7 @@ export const AI_PROVIDERS = [
   { value: "lovable", label: "Lovable AI (Built-in, no API key needed)" },
   { value: "openai", label: "OpenAI (Requires API Key)" },
   { value: "google", label: "Google Gemini (Requires API Key)" },
+  { value: "anthropic", label: "Anthropic Claude (Requires API Key)" },
 ] as const;
 
 export const AI_MODELS = [
@@ -139,4 +140,9 @@ export const AI_MODELS = [
   { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "google" },
   { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "google" },
   { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "google" },
+  // Anthropic Claude models
+  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4", provider: "anthropic" },
+  { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet", provider: "anthropic" },
+  { value: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku (Fast)", provider: "anthropic" },
+  { value: "claude-3-opus-20240229", label: "Claude 3 Opus", provider: "anthropic" },
 ] as const;
