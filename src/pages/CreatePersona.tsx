@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +12,12 @@ import { toast } from "@/hooks/use-toast";
 
 export default function CreatePersona() {
   const navigate = useNavigate();
-  const [scenario, setScenario] = useState("");
-  const [purpose, setPurpose] = useState("");
-  const [variance, setVariance] = useState([5]);
+  const location = useLocation();
+  const prefill = location.state as { scenario?: string; purpose?: string; variance?: number } | null;
+
+  const [scenario, setScenario] = useState(prefill?.scenario || "");
+  const [purpose, setPurpose] = useState(prefill?.purpose || "");
+  const [variance, setVariance] = useState([prefill?.variance ?? 5]);
   const [count, setCount] = useState(1);
   const [loading, setLoading] = useState(false);
 
