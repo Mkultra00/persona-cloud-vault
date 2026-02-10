@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { personaId, conversationId, message } = await req.json();
+    const { personaId, conversationId, message, attachments } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -88,8 +88,33 @@ ${JSON.stringify(persona.memory, null, 2)}
 5. Your internal biases: ${psychology.internalBiases?.join(", ")}
 6. Reference past interactions naturally when relevant.
 7. Your trust level starts at ${psychology.trustLevel}/100.
+8. When the user shares images or documents, examine and comment on them in character. React as your persona would.
 
 IMPORTANT: After your response, on a new line starting with "INNER_THOUGHT:", write what you're really thinking but not saying (1-2 sentences). This will be shown only to the admin.`;
+
+    // Build user message content (multimodal if attachments present)
+    let userContent: any = message;
+    if (attachments && attachments.length > 0) {
+      const contentParts: any[] = [];
+      if (message) {
+        contentParts.push({ type: "text", text: message });
+      }
+      for (const att of attachments) {
+        if (att.type === "image") {
+          contentParts.push({
+            type: "image_url",
+            image_url: { url: att.url },
+          });
+        } else if (att.type === "document") {
+          // For documents, include the extracted text
+          contentParts.push({
+            type: "text",
+            text: `[Attached document: ${att.name}]\n\n${att.textContent}`,
+          });
+        }
+      }
+      userContent = contentParts;
+    }
 
     const chatMessages = [
       { role: "system", content: systemPrompt },
@@ -97,7 +122,7 @@ IMPORTANT: After your response, on a new line starting with "INNER_THOUGHT:", wr
         role: m.role === "persona" ? "assistant" : "user",
         content: m.content,
       })),
-      { role: "user", content: message },
+      { role: "user", content: userContent },
     ];
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -161,9 +186,7 @@ IMPORTANT: After your response, on a new line starting with "INNER_THOUGHT:", wr
                   const content = parsed.choices?.[0]?.delta?.content;
                   if (content) {
                     fullContent += content;
-                    // Check if we've hit the INNER_THOUGHT marker
                     if (fullContent.includes("INNER_THOUGHT:")) {
-                      const parts = fullContent.split("INNER_THOUGHT:");
                       const visiblePart = content.split("INNER_THOUGHT:")[0];
                       const thoughtPart = content.split("INNER_THOUGHT:")[1];
                       
