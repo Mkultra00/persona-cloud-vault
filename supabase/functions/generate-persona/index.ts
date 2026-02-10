@@ -136,6 +136,46 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
       }).select().single();
 
       if (error) throw error;
+
+      // Auto-generate portrait
+      try {
+        const pid = personaData.identity;
+        const portraitPrompt = `A professional headshot portrait photo of a ${pid.age}-year-old ${pid.gender} person. ${pid.ethnicity} ethnicity. ${pid.hairColor} hair, ${pid.eyeColor} eyes, ${pid.height} tall. ${pid.distinguishingFeatures?.join(", ") || ""}. They work as a ${pid.occupation}. Photorealistic, soft studio lighting, neutral background, high quality portrait photography.`;
+
+        const portraitRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image",
+            messages: [{ role: "user", content: portraitPrompt }],
+            modalities: ["image", "text"],
+          }),
+        });
+
+        if (portraitRes.ok) {
+          const portraitData = await portraitRes.json();
+          const imageUrl = portraitData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          if (imageUrl) {
+            const base64Match = imageUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+            if (base64Match) {
+              const ext = base64Match[1];
+              const raw = base64Match[2];
+              const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
+              const filePath = `${data.id}.${ext}`;
+              await supabase.storage.from("portraits").upload(filePath, bytes, { contentType: `image/${ext}`, upsert: true });
+              const { data: { publicUrl } } = supabase.storage.from("portraits").getPublicUrl(filePath);
+              await supabase.from("personas").update({ portrait_url: publicUrl, portrait_prompt: portraitPrompt }).eq("id", data.id);
+              data.portrait_url = publicUrl;
+            }
+          }
+        }
+      } catch (portraitErr) {
+        console.error("Portrait auto-generation failed (non-blocking):", portraitErr);
+      }
+
       personas.push(data);
     }
 
