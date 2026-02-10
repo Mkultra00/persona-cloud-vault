@@ -82,8 +82,17 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
   }
 }`;
 
+    // Fetch existing persona first names to avoid duplicates
+    const { data: existingPersonas } = await supabase
+      .from("personas")
+      .select("identity");
+    const existingNames = (existingPersonas || [])
+      .map((p: any) => p.identity?.firstName)
+      .filter(Boolean);
+
     const personas = [];
     const actualCount = Math.min(count || 1, 10);
+    const newNames: string[] = [];
 
     for (let i = 0; i < actualCount; i++) {
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -96,7 +105,7 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
           model,
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\nGenerate persona ${i + 1} of ${actualCount}. Each persona should be unique.` },
+            { role: "user", content: `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\nGenerate persona ${i + 1} of ${actualCount}. Each persona should be unique.\n\nIMPORTANT: Do NOT use any of these first names (they are already taken): ${[...existingNames, ...newNames].join(", ") || "none yet"}` },
           ],
         }),
       });
@@ -122,6 +131,7 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
       // Strip markdown code fences if present
       content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       const personaData = JSON.parse(content);
+      if (personaData.identity?.firstName) newNames.push(personaData.identity.firstName);
 
       // Get user id from token
       let userId = null;
