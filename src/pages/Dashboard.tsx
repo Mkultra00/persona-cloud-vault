@@ -128,9 +128,13 @@ export default function Dashboard() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-lg">
-                        {getMoodEmoji(p)}
-                      </div>
+                      {p.portrait_url ? (
+                        <img src={p.portrait_url} alt={getPersonaName(p)} className="h-10 w-10 rounded-full object-cover border border-border" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-lg">
+                          {getMoodEmoji(p)}
+                        </div>
+                      )}
                       <div>
                         <CardTitle className="text-base">{getPersonaName(p)}</CardTitle>
                         <p className="text-xs text-muted-foreground">
