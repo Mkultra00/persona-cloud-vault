@@ -218,6 +218,8 @@ export default function PersonaDetail() {
           {showAgenda && (
             <CardContent className="space-y-3 text-sm">
               <Field label="Hidden Agenda" value={psych?.hiddenAgenda} />
+              <Field label="🤫 Deep Secrets" value={psych?.deepSecrets?.join("; ")} />
+              <Field label="😳 Embarrassing Moments" value={psych?.embarrassingMoments?.join("; ")} />
               <Field label="Mental Health Challenges" value={psych?.mentalHealthChallenges?.join(", ")} />
               <Field label="Physical Health Challenges" value={psych?.physicalHealthChallenges?.join(", ")} />
               <Field label="Internal Biases" value={psych?.internalBiases?.join(", ")} />
