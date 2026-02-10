@@ -8,6 +8,7 @@ import { Plus, Download, Upload, Settings, LogOut, MessageSquare, Trash2, Eye } 
 import { useNavigate } from "react-router-dom";
 import type { Persona } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
+import logoImg from "@/assets/logo.png";
 
 export default function Dashboard() {
   const { data: personas, isLoading, deleteMutation, importPersonas } = usePersonas();
@@ -61,7 +62,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <h1 className="text-xl font-bold text-foreground">Persona Generator</h1>
+          <div className="flex items-center gap-2">
+            <img src={logoImg} alt="Personas R Us logo" className="h-8 w-8 rounded" />
+            <h1 className="text-xl font-bold text-foreground">Personas R Us</h1>
+          </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
               <Settings className="h-4 w-4" />
