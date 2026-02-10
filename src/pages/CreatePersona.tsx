@@ -35,21 +35,7 @@ export default function CreatePersona() {
         body: { scenario, purpose, varianceLevel: variance[0], count },
       });
       if (error) throw error;
-      toast({
-        title: `${count} persona${count > 1 ? "s" : ""} generated! 🎉`,
-        description: (
-          <div className="flex items-center gap-3 mt-1">
-            <img
-              src={pandaDollImg}
-              alt="Panda making a doll"
-              className="h-16 w-16 object-contain animate-[bounce_0.6s_ease-in-out_3]"
-            />
-            <span className="text-sm font-medium">
-              Your new persona{count > 1 ? "s are" : " is"} ready!
-            </span>
-          </div>
-        ) as any,
-      });
+      toast({ title: `${count} persona${count > 1 ? "s" : ""} created! 🎉` });
       navigate("/");
     } catch (e: any) {
       toast({ title: "Generation failed", description: e.message, variant: "destructive" });
@@ -138,6 +124,21 @@ export default function CreatePersona() {
           </CardContent>
         </Card>
       </main>
+
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="flex flex-col items-center gap-4 rounded-2xl bg-card p-8 shadow-2xl border border-border animate-scale-in">
+            <img
+              src={pandaDollImg}
+              alt="Panda assembling a persona"
+              className="h-40 w-40 object-contain animate-bounce"
+            />
+            <p className="text-lg font-bold text-foreground">Building your persona{count > 1 ? "s" : ""}...</p>
+            <p className="text-sm text-muted-foreground">🔨 Smashing parts together!</p>
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
