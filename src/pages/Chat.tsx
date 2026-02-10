@@ -137,8 +137,12 @@ export default function Chat() {
     });
   };
 
+  const sendingRef = useRef(false);
+
   const handleSend = async () => {
+    if (sendingRef.current) return;
     if ((!input.trim() && attachments.length === 0) || !conversationId || !personaId) return;
+    sendingRef.current = true;
     const userMessage = input.trim();
     const currentAttachments = [...attachments];
     setInput("");
@@ -269,6 +273,7 @@ export default function Chat() {
       toast({ title: "Chat error", description: e.message, variant: "destructive" });
     } finally {
       setSending(false);
+      sendingRef.current = false;
       // Clean up previews
       currentAttachments.forEach((a) => a.preview && URL.revokeObjectURL(a.preview));
     }
