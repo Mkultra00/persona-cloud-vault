@@ -42,9 +42,28 @@ export interface PersonaPsychology {
   frustrations: string[];
   aspirations: string[];
   hiddenAgenda: string;
+  mentalHealthChallenges: string[];
+  physicalHealthChallenges: string[];
   internalBiases: string[];
   proactivityLevel: number;
   topicsTheyVolunteer: string[];
+}
+
+export interface EducationEntry {
+  institution: string;
+  degree: string;
+  fieldOfStudy: string;
+  yearStarted: number;
+  yearEnded: number | null;
+  highlights: string[];
+}
+
+export interface OccupationEntry {
+  title: string;
+  employer: string;
+  yearStarted: number;
+  yearEnded: number | null;
+  description: string;
 }
 
 export interface PersonaBackstory {
@@ -52,6 +71,8 @@ export interface PersonaBackstory {
   keyLifeEvents: { event: string; age: number; impact: string }[];
   currentLifeSituation: string;
   recentExperiences: string[];
+  educationHistory: EducationEntry[];
+  occupationHistory: OccupationEntry[];
 }
 
 export interface Persona {

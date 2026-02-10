@@ -69,14 +69,16 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
     "trustLevel": number(0-100), "patience": number(0-100), "emotionalExpressiveness": number(0-100),
     "primaryMotivation": string, "secondaryMotivation": string,
     "fears": string[], "frustrations": string[], "aspirations": string[],
-    "hiddenAgenda": string, "internalBiases": string[],
+    "hiddenAgenda": string, "mentalHealthChallenges": string[], "physicalHealthChallenges": string[], "internalBiases": string[],
     "proactivityLevel": number(0-100), "topicsTheyVolunteer": string[]
   },
   "backstory": {
     "lifeNarrative": string (2-3 paragraphs),
     "keyLifeEvents": [{"event": string, "age": number, "impact": string}],
     "currentLifeSituation": string,
-    "recentExperiences": string[]
+    "recentExperiences": string[],
+    "educationHistory": [{"institution": string, "degree": string, "fieldOfStudy": string, "yearStarted": number, "yearEnded": number|null, "highlights": string[]}],
+    "occupationHistory": [{"title": string, "employer": string, "yearStarted": number, "yearEnded": number|null, "description": string}]
   }
 }`;
 
