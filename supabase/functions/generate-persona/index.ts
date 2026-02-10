@@ -41,6 +41,13 @@ serve(async (req) => {
 
     const systemPrompt = `You are a persona generation engine. Based on the admin's scenario and purpose, generate a complete, realistic human persona. The persona must be internally consistent — their backstory, personality, and current situation should all form a coherent narrative.
 
+CRITICAL NAME RULES:
+- Every persona MUST have a unique, randomly generated first and last name.
+- Names must be culturally appropriate for the persona's ethnicity and nationality.
+- NEVER reuse common placeholder names like "John Smith" or "Jane Doe".
+- Each persona in a batch MUST have completely different names from the others.
+- Use diverse, creative, realistic names from a wide variety of cultures.
+
 VARIANCE LEVEL: ${varianceLevel}/10
 - At level 1-3: Persona closely matches what the scenario implies.
 - At level 4-6: Introduce some unexpected but plausible traits.
