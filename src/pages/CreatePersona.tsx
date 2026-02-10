@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,29 @@ export default function CreatePersona() {
   const [variance, setVariance] = useState([prefill?.variance ?? 5]);
   const [count, setCount] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [buildStep, setBuildStep] = useState(0);
+  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const buildSteps = [
+    { emoji: "🧬", text: "Assembling identity..." },
+    { emoji: "🧠", text: "Adding personality..." },
+    { emoji: "📖", text: "Writing backstory..." },
+    { emoji: "🎭", text: "Applying quirks & biases..." },
+    { emoji: "🖼️", text: "Painting portrait..." },
+    { emoji: "✨", text: "Final touches..." },
+  ];
+
+  useEffect(() => {
+    if (loading) {
+      setBuildStep(0);
+      stepTimerRef.current = setInterval(() => {
+        setBuildStep((prev) => (prev < 5 ? prev + 1 : prev));
+      }, 5000);
+    } else {
+      if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+    }
+    return () => { if (stepTimerRef.current) clearInterval(stepTimerRef.current); };
+  }, [loading]);
 
   const varianceLabels = ["", "Archetypal", "Archetypal", "Realistic", "Realistic", "Interesting", "Interesting", "Edge Case", "Edge Case", "Wild Card", "Wild Card"];
 
@@ -127,15 +150,38 @@ export default function CreatePersona() {
 
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="flex flex-col items-center gap-4 rounded-2xl bg-card p-8 shadow-2xl border border-border animate-scale-in">
+          <div className="flex flex-col items-center gap-5 rounded-2xl bg-card p-10 shadow-2xl border border-border animate-scale-in min-w-[340px]">
             <img
               src={pandaDollImg}
               alt="Panda assembling a persona"
               className="h-40 w-40 object-contain animate-bounce"
             />
             <p className="text-lg font-bold text-foreground">Building your persona{count > 1 ? "s" : ""}...</p>
-            <p className="text-sm text-muted-foreground">🔨 Smashing parts together!</p>
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+
+            <div className="w-full space-y-2">
+              {buildSteps.map((step, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-2 text-sm transition-all duration-500 ${
+                    i < buildStep ? "text-muted-foreground line-through opacity-60" :
+                    i === buildStep ? "text-foreground font-semibold" :
+                    "text-muted-foreground/40"
+                  }`}
+                >
+                  <span className={`text-base ${i === buildStep ? "animate-bounce" : ""}`}>{step.emoji}</span>
+                  <span>{step.text}</span>
+                  {i < buildStep && <span className="ml-auto text-xs text-primary">✓</span>}
+                  {i === buildStep && <Loader2 className="ml-auto h-3 w-3 animate-spin text-primary" />}
+                </div>
+              ))}
+            </div>
+
+            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${((buildStep + 1) / buildSteps.length) * 100}%` }}
+              />
+            </div>
           </div>
         </div>
       )}
