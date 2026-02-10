@@ -33,6 +33,12 @@ serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(50);
 
+    // Remove the last user message since it will be sent as the current message
+    const filteredHistory = [...(history || [])];
+    if (filteredHistory.length > 0 && filteredHistory[filteredHistory.length - 1].role === "user") {
+      filteredHistory.pop();
+    }
+
     // Get user's provider config
     let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
@@ -113,7 +119,7 @@ IMPORTANT: After your response, on a new line starting with "INNER_THOUGHT:", wr
 
     const chatMessages = [
       { role: "system", content: systemPrompt },
-      ...(history || []).map((m: any) => ({
+      ...filteredHistory.map((m: any) => ({
         role: m.role === "persona" ? "assistant" : "user",
         content: m.content,
       })),
