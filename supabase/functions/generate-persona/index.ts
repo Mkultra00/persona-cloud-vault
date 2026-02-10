@@ -84,14 +84,44 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
       .map((p: any) => p.identity?.firstName)
       .filter(Boolean);
 
+    // Step 1: Research phase — gather contextual knowledge about the scenario
+    console.log("Starting research phase for scenario:", scenario);
+    const researchPrompt = `You are a research analyst. Given a scenario and testing purpose, produce a detailed research brief that will help create realistic personas. Cover:
+
+1. **Industry/Domain Context**: Key facts, terminology, common roles, typical challenges in this domain.
+2. **Demographics**: Who are the real people in this scenario? Age ranges, education levels, income brackets, geographic distribution, cultural backgrounds.
+3. **Behavioral Patterns**: How do real people in this scenario typically behave? What are their motivations, pain points, daily routines?
+4. **Psychographic Insights**: Common attitudes, values, communication styles, tech adoption levels.
+5. **Edge Cases**: Unusual but realistic profiles that might exist in this scenario — people who defy stereotypes or have unexpected backgrounds.
+6. **Current Trends**: Any relevant societal, technological, or economic trends that would shape these personas today.
+
+Be specific and data-informed. Use your knowledge to ground the research in reality.`;
+
+    const researchResponse = await fetchAICompletion(providerConfig, [
+      { role: "system", content: researchPrompt },
+      { role: "user", content: `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\nProvide a comprehensive research brief.` },
+    ]);
+
+    let researchBrief = "";
+    if (researchResponse.ok) {
+      const researchData = await researchResponse.json();
+      researchBrief = researchData.choices?.[0]?.message?.content || "";
+      console.log("Research phase complete, brief length:", researchBrief.length);
+    } else {
+      console.warn("Research phase failed (non-blocking), proceeding without research:", researchResponse.status);
+    }
+
+    // Step 2: Generate personas informed by research
     const personas = [];
     const actualCount = Math.min(count || 1, 10);
     const newNames: string[] = [];
 
     for (let i = 0; i < actualCount; i++) {
+      const userContent = `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\n${researchBrief ? `RESEARCH BRIEF (use this to ground the persona in reality):\n${researchBrief}\n\n` : ""}Generate persona ${i + 1} of ${actualCount}. Each persona should be unique and grounded in the research above.\n\nIMPORTANT: Do NOT use any of these first names (they are already taken): ${[...existingNames, ...newNames].join(", ") || "none yet"}`;
+
       const response = await fetchAICompletion(providerConfig, [
         { role: "system", content: systemPrompt },
-        { role: "user", content: `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\nGenerate persona ${i + 1} of ${actualCount}. Each persona should be unique.\n\nIMPORTANT: Do NOT use any of these first names (they are already taken): ${[...existingNames, ...newNames].join(", ") || "none yet"}` },
+        { role: "user", content: userContent },
       ]);
 
       if (!response.ok) {
