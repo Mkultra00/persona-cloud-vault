@@ -140,14 +140,16 @@ export default function Chat() {
   const sendingRef = useRef(false);
 
   const handleSend = async () => {
-    if (sendingRef.current) return;
+    console.log("[handleSend] called, sendingRef:", sendingRef.current, "sending:", sending);
+    if (sendingRef.current || sending) return;
     if ((!input.trim() && attachments.length === 0) || !conversationId || !personaId) return;
     sendingRef.current = true;
+    setSending(true);
+    console.log("[handleSend] proceeding with send");
     const userMessage = input.trim();
     const currentAttachments = [...attachments];
     setInput("");
     setAttachments([]);
-    setSending(true);
     setStreamingContent("");
     setStreamingThought("");
 
@@ -402,11 +404,12 @@ export default function Chat() {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
+                  e.stopPropagation();
                   handleSend();
                 }
               }}
             />
-            <Button onClick={handleSend} disabled={sending || (!input.trim() && attachments.length === 0)} size="icon" className="shrink-0">
+            <Button onClick={handleSend} disabled={sending || (!input.trim() && attachments.length === 0)} size="icon" className="shrink-0" type="button">
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
