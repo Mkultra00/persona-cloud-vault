@@ -20,7 +20,14 @@ export function useSettings() {
   });
 
   const upsert = useMutation({
-    mutationFn: async (settings: { ai_provider: string; ai_model: string }) => {
+    mutationFn: async (settings: {
+      ai_provider: string;
+      ai_model: string;
+      persona_ai_provider?: string;
+      persona_ai_model?: string;
+      openai_api_key?: string;
+      google_api_key?: string;
+    }) => {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("admin_settings").upsert({

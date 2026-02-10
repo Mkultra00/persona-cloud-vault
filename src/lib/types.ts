@@ -116,7 +116,14 @@ export interface Conversation {
   ended_at: string | null;
 }
 
+export const AI_PROVIDERS = [
+  { value: "lovable", label: "Lovable AI (Built-in, no API key needed)" },
+  { value: "openai", label: "OpenAI (Requires API Key)" },
+  { value: "google", label: "Google Gemini (Requires API Key)" },
+] as const;
+
 export const AI_MODELS = [
+  // Lovable AI models
   { value: "google/gemini-3-flash-preview", label: "Gemini 3 Flash (Fast)", provider: "lovable" },
   { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash (Balanced)", provider: "lovable" },
   { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro (Best)", provider: "lovable" },
@@ -124,4 +131,12 @@ export const AI_MODELS = [
   { value: "openai/gpt-5", label: "GPT-5 (Powerful)", provider: "lovable" },
   { value: "openai/gpt-5-mini", label: "GPT-5 Mini (Efficient)", provider: "lovable" },
   { value: "openai/gpt-5.2", label: "GPT-5.2 (Latest)", provider: "lovable" },
+  // OpenAI direct models
+  { value: "gpt-4o", label: "GPT-4o", provider: "openai" },
+  { value: "gpt-4o-mini", label: "GPT-4o Mini", provider: "openai" },
+  { value: "gpt-4-turbo", label: "GPT-4 Turbo", provider: "openai" },
+  // Google Gemini direct models
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "google" },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "google" },
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "google" },
 ] as const;

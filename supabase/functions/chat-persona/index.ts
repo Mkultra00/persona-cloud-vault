@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fetchAICompletion, getProviderConfig } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,8 +12,6 @@ serve(async (req) => {
 
   try {
     const { personaId, conversationId, message, attachments } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -34,8 +33,8 @@ serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(50);
 
-    // Get user's model preference
-    let model = "google/gemini-3-flash-preview";
+    // Get user's provider config
+    let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     if (token && token !== Deno.env.get("SUPABASE_ANON_KEY")) {
@@ -43,15 +42,10 @@ serve(async (req) => {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
       const { data: { user } } = await userClient.auth.getUser();
-      if (user) {
-        const { data: settings } = await supabase
-          .from("admin_settings")
-          .select("ai_model")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (settings?.ai_model) model = settings.ai_model;
-      }
+      userId = user?.id ?? null;
     }
+
+    const providerConfig = await getProviderConfig(supabase, userId, "chat");
 
     const identity = persona.identity as any;
     const psychology = persona.psychology as any;
@@ -126,18 +120,7 @@ IMPORTANT: After your response, on a new line starting with "INNER_THOUGHT:", wr
       { role: "user", content: userContent },
     ];
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: chatMessages,
-        stream: true,
-      }),
-    });
+    const response = await fetchAICompletion(providerConfig, chatMessages, { stream: true });
 
     if (!response.ok) {
       if (response.status === 429) {
