@@ -62,9 +62,9 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <img src={logoImg} alt="Personas R Us logo" className="h-8 w-8 rounded" />
-            <h1 className="text-xl font-bold text-foreground">Personas R Us</h1>
+          <div className="flex items-center gap-3">
+            <img src={logoImg} alt="Personas R Us logo" className="h-14 w-14 rounded-lg" />
+            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Personas R Us</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
