@@ -317,7 +317,7 @@ export default function Chat() {
               </div>
               {showThoughts && msg.role === "persona" && msg.inner_thought && (
                 <div className="flex justify-start mt-1 ml-2">
-                  <div className="max-w-[75%] rounded-lg px-3 py-2 text-xs bg-muted/50 border border-border/50 italic text-muted-foreground">
+                  <div className="max-w-[85%] rounded-lg px-3 py-2 text-xs bg-muted/50 border border-border/50 italic text-muted-foreground whitespace-pre-wrap break-words">
                     💭 {msg.inner_thought}
                   </div>
                 </div>
@@ -335,7 +335,7 @@ export default function Chat() {
               </div>
               {showThoughts && streamingThought && (
                 <div className="flex justify-start mt-1 ml-2">
-                  <div className="max-w-[75%] rounded-lg px-3 py-2 text-xs bg-muted/50 border border-border/50 italic text-muted-foreground">
+                  <div className="max-w-[85%] rounded-lg px-3 py-2 text-xs bg-muted/50 border border-border/50 italic text-muted-foreground whitespace-pre-wrap break-words">
                     💭 {streamingThought}
                   </div>
                 </div>
