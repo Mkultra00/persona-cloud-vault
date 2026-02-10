@@ -42,6 +42,8 @@ export interface PersonaPsychology {
   frustrations: string[];
   aspirations: string[];
   hiddenAgenda: string;
+  deepSecrets: string[];
+  embarrassingMoments: string[];
   mentalHealthChallenges: string[];
   physicalHealthChallenges: string[];
   internalBiases: string[];

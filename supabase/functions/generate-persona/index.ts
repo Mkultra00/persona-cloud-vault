@@ -69,7 +69,7 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
     "trustLevel": number(0-100), "patience": number(0-100), "emotionalExpressiveness": number(0-100),
     "primaryMotivation": string, "secondaryMotivation": string,
     "fears": string[], "frustrations": string[], "aspirations": string[],
-    "hiddenAgenda": string, "mentalHealthChallenges": string[], "physicalHealthChallenges": string[], "internalBiases": string[],
+    "hiddenAgenda": string, "deepSecrets": string[], "embarrassingMoments": string[], "mentalHealthChallenges": string[], "physicalHealthChallenges": string[], "internalBiases": string[],
     "proactivityLevel": number(0-100), "topicsTheyVolunteer": string[]
   },
   "backstory": {
