@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.chat-persona]
 verify_jwt = false
+
+[functions.generate-portrait]
+verify_jwt = false
