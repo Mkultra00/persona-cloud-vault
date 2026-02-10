@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import pandaDollImg from "@/assets/panda-making-doll.png";
 
 export default function CreatePersona() {
   const navigate = useNavigate();
@@ -34,7 +35,21 @@ export default function CreatePersona() {
         body: { scenario, purpose, varianceLevel: variance[0], count },
       });
       if (error) throw error;
-      toast({ title: `${count} persona${count > 1 ? "s" : ""} generated!` });
+      toast({
+        title: `${count} persona${count > 1 ? "s" : ""} generated! 🎉`,
+        description: (
+          <div className="flex items-center gap-3 mt-1">
+            <img
+              src={pandaDollImg}
+              alt="Panda making a doll"
+              className="h-16 w-16 object-contain animate-[bounce_0.6s_ease-in-out_3]"
+            />
+            <span className="text-sm font-medium">
+              Your new persona{count > 1 ? "s are" : " is"} ready!
+            </span>
+          </div>
+        ) as any,
+      });
       navigate("/");
     } catch (e: any) {
       toast({ title: "Generation failed", description: e.message, variant: "destructive" });
