@@ -1,0 +1,7 @@
+project_id = "kaxfufnizmvktlewkepo"
+
+[functions.generate-persona]
+verify_jwt = false
+
+[functions.chat-persona]
+verify_jwt = false
