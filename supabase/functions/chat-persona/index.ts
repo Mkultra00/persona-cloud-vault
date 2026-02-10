@@ -143,6 +143,10 @@ IMPORTANT: After your response, on a new line starting with "INNER_THOUGHT:", wr
     const decoder = new TextDecoder();
 
     let fullContent = "";
+    let inThoughtMode = false;
+    // Buffer to detect INNER_THOUGHT marker that may span across chunks
+    let pendingContent = "";
+    const MARKER = "INNER_THOUGHT:";
     
     const stream = new ReadableStream({
       async start(controller) {
@@ -162,6 +166,15 @@ IMPORTANT: After your response, on a new line starting with "INNER_THOUGHT:", wr
               if (line.startsWith("data: ")) {
                 const jsonStr = line.slice(6).trim();
                 if (jsonStr === "[DONE]") {
+                  // Flush any remaining pending content
+                  if (pendingContent) {
+                    if (inThoughtMode) {
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ inner_thought: pendingContent })}\n\n`));
+                    } else {
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: pendingContent } }] })}\n\n`));
+                    }
+                    pendingContent = "";
+                  }
                   controller.enqueue(encoder.encode("data: [DONE]\n\n"));
                   break;
                 }
@@ -170,18 +183,36 @@ IMPORTANT: After your response, on a new line starting with "INNER_THOUGHT:", wr
                   const content = parsed.choices?.[0]?.delta?.content;
                   if (content) {
                     fullContent += content;
-                    if (fullContent.includes("INNER_THOUGHT:")) {
-                      const visiblePart = content.split("INNER_THOUGHT:")[0];
-                      const thoughtPart = content.split("INNER_THOUGHT:")[1];
-                      
-                      if (visiblePart) {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: visiblePart } }] })}\n\n`));
-                      }
-                      if (thoughtPart) {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ inner_thought: thoughtPart })}\n\n`));
-                      }
+
+                    if (inThoughtMode) {
+                      // Already past the marker — everything is inner thought
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ inner_thought: content })}\n\n`));
                     } else {
-                      controller.enqueue(encoder.encode(line + "\n"));
+                      // Accumulate to detect marker that may span chunks
+                      pendingContent += content;
+
+                      const markerIdx = pendingContent.indexOf(MARKER);
+                      if (markerIdx !== -1) {
+                        // Found the marker — split visible vs thought
+                        const visible = pendingContent.slice(0, markerIdx);
+                        const thought = pendingContent.slice(markerIdx + MARKER.length);
+                        if (visible) {
+                          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: visible } }] })}\n\n`));
+                        }
+                        if (thought) {
+                          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ inner_thought: thought })}\n\n`));
+                        }
+                        pendingContent = "";
+                        inThoughtMode = true;
+                      } else if (pendingContent.length > MARKER.length) {
+                        // Flush safe prefix (keep tail that could be start of marker)
+                        const safeLen = pendingContent.length - MARKER.length;
+                        const safe = pendingContent.slice(0, safeLen);
+                        pendingContent = pendingContent.slice(safeLen);
+                        if (safe) {
+                          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: safe } }] })}\n\n`));
+                        }
+                      }
                     }
                   } else {
                     controller.enqueue(encoder.encode(line + "\n"));
