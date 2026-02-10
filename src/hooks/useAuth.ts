@@ -8,6 +8,20 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        supabase.rpc("is_admin").then(({ data }) => {
+          setIsAdmin(!!data);
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
       const u = session?.user ?? null;
       setUser(u);
@@ -17,7 +31,6 @@ export function useAuth() {
       } else {
         setIsAdmin(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
