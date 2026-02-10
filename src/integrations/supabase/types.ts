@@ -19,7 +19,11 @@ export type Database = {
           ai_model: string
           ai_provider: string
           created_at: string
+          google_api_key: string | null
           id: string
+          openai_api_key: string | null
+          persona_ai_model: string
+          persona_ai_provider: string
           updated_at: string
           user_id: string
         }
@@ -27,7 +31,11 @@ export type Database = {
           ai_model?: string
           ai_provider?: string
           created_at?: string
+          google_api_key?: string | null
           id?: string
+          openai_api_key?: string | null
+          persona_ai_model?: string
+          persona_ai_provider?: string
           updated_at?: string
           user_id: string
         }
@@ -35,7 +43,11 @@ export type Database = {
           ai_model?: string
           ai_provider?: string
           created_at?: string
+          google_api_key?: string | null
           id?: string
+          openai_api_key?: string | null
+          persona_ai_model?: string
+          persona_ai_provider?: string
           updated_at?: string
           user_id?: string
         }

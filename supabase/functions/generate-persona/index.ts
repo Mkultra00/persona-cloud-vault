@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fetchAICompletion, getProviderConfig } from "../_shared/ai-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,8 +12,6 @@ serve(async (req) => {
 
   try {
     const { scenario, purpose, varianceLevel, count } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -22,22 +21,17 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
 
-    // Get user's AI model preference
-    let model = "google/gemini-3-flash-preview";
+    let userId: string | null = null;
     if (token && token !== Deno.env.get("SUPABASE_ANON_KEY")) {
       const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
       const { data: { user } } = await userClient.auth.getUser();
-      if (user) {
-        const { data: settings } = await supabase
-          .from("admin_settings")
-          .select("ai_model")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (settings?.ai_model) model = settings.ai_model;
-      }
+      userId = user?.id ?? null;
     }
+
+    // Get provider config for persona generation
+    const providerConfig = await getProviderConfig(supabase, userId, "persona");
 
     const systemPrompt = `You are a persona generation engine. Based on the admin's scenario and purpose, generate a complete, realistic human persona. The persona must be internally consistent — their backstory, personality, and current situation should all form a coherent narrative.
 
@@ -95,20 +89,10 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
     const newNames: string[] = [];
 
     for (let i = 0; i < actualCount; i++) {
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\nGenerate persona ${i + 1} of ${actualCount}. Each persona should be unique.\n\nIMPORTANT: Do NOT use any of these first names (they are already taken): ${[...existingNames, ...newNames].join(", ") || "none yet"}` },
-          ],
-        }),
-      });
+      const response = await fetchAICompletion(providerConfig, [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Scenario: ${scenario}\n\nTesting Purpose: ${purpose}\n\nGenerate persona ${i + 1} of ${actualCount}. Each persona should be unique.\n\nIMPORTANT: Do NOT use any of these first names (they are already taken): ${[...existingNames, ...newNames].join(", ") || "none yet"}` },
+      ]);
 
       if (!response.ok) {
         const status = response.status;
@@ -133,15 +117,7 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
       const personaData = JSON.parse(content);
       if (personaData.identity?.firstName) newNames.push(personaData.identity.firstName);
 
-      // Get user id from token
-      let userId = null;
-      if (token && token !== Deno.env.get("SUPABASE_ANON_KEY")) {
-        const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-          global: { headers: { Authorization: `Bearer ${token}` } },
-        });
-        const { data: { user } } = await userClient.auth.getUser();
-        userId = user?.id;
-      }
+      // userId already resolved above
 
       const { data, error } = await supabase.from("personas").insert({
         created_by: userId,
@@ -161,18 +137,12 @@ You MUST respond with valid JSON only. No markdown, no explanation. Return an ob
         const pid = personaData.identity;
         const portraitPrompt = `A professional headshot portrait photo of a ${pid.age}-year-old ${pid.gender} person. ${pid.ethnicity} ethnicity. ${pid.hairColor} hair, ${pid.eyeColor} eyes, ${pid.height} tall. ${pid.distinguishingFeatures?.join(", ") || ""}. They work as a ${pid.occupation}. Photorealistic, soft studio lighting, neutral background, high quality portrait photography.`;
 
-        const portraitRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
-            messages: [{ role: "user", content: portraitPrompt }],
-            modalities: ["image", "text"],
-          }),
-        });
+        // Portrait always uses Lovable AI (image gen)
+        const portraitRes = await fetchAICompletion(
+          { provider: "lovable", model: "google/gemini-2.5-flash-image" },
+          [{ role: "user", content: portraitPrompt }],
+          { modalities: ["image", "text"] }
+        );
 
         if (portraitRes.ok) {
           const portraitData = await portraitRes.json();
