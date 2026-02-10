@@ -27,6 +27,7 @@ export function useSettings() {
       persona_ai_model?: string;
       openai_api_key?: string;
       google_api_key?: string;
+      anthropic_api_key?: string;
     }) => {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("Not authenticated");
