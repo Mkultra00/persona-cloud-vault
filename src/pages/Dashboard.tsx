@@ -4,7 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Download, Upload, Settings, LogOut, MessageSquare, Trash2, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Download, Upload, Settings, LogOut, MessageSquare, Trash2, Eye, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Persona } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
@@ -63,6 +65,69 @@ export default function Dashboard() {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-end gap-2 mb-4">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <BookOpen className="h-4 w-4" /> Instructions
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[85vh]">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl">Welcome to Personas R Us</DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="max-h-[65vh] pr-4">
+                  <div className="space-y-6 text-sm text-muted-foreground leading-relaxed">
+                    <section>
+                      <h3 className="text-base font-semibold text-foreground mb-2">🎯 What is this?</h3>
+                      <p>
+                        Personas R Us lets you generate realistic AI-powered personas for user testing, 
+                        role-playing scenarios, and product research. Each persona has a unique identity, 
+                        backstory, psychology, and memory — and you can chat with them in real time.
+                      </p>
+                    </section>
+
+                    <section>
+                      <h3 className="text-base font-semibold text-foreground mb-2">🚀 Getting Started</h3>
+                      <ol className="list-decimal list-inside space-y-2">
+                        <li><strong>Create a Persona</strong> — Click the <em>"Create New"</em> button and describe a testing scenario (e.g. "A frustrated customer trying to return a damaged product").</li>
+                        <li><strong>Attach Knowledge</strong> — Optionally upload documents or images to give your persona extra context about your product, service, or scenario.</li>
+                        <li><strong>Generate</strong> — The AI will research the scenario and build a complete persona with a name, background, personality traits, and psychological profile.</li>
+                        <li><strong>Chat</strong> — Once generated, click <em>"Chat"</em> on any persona card to have a live conversation. The persona will respond in-character based on their profile.</li>
+                      </ol>
+                    </section>
+
+                    <section>
+                      <h3 className="text-base font-semibold text-foreground mb-2">📋 Dashboard Features</h3>
+                      <ul className="list-disc list-inside space-y-2">
+                        <li><strong>View</strong> — See a persona's full profile including identity, backstory, psychology, and memory.</li>
+                        <li><strong>Chat</strong> — Start or continue a conversation with any persona.</li>
+                        <li><strong>Export</strong> — Download all your personas as a JSON file for backup or sharing.</li>
+                        <li><strong>Import</strong> — Load personas from a previously exported JSON file.</li>
+                        <li><strong>Delete</strong> — Remove a persona you no longer need (this cannot be undone).</li>
+                      </ul>
+                    </section>
+
+                    <section>
+                      <h3 className="text-base font-semibold text-foreground mb-2">💬 Chat Tips</h3>
+                      <ul className="list-disc list-inside space-y-2">
+                        <li>Personas remember context within a conversation session.</li>
+                        <li>You can view the persona's <em>inner thoughts</em> to understand their reasoning and emotional state during the conversation.</li>
+                        <li>Trust levels change dynamically based on how the conversation goes.</li>
+                        <li>Start a new session anytime to reset the conversation context.</li>
+                      </ul>
+                    </section>
+
+                    <section>
+                      <h3 className="text-base font-semibold text-foreground mb-2">⚙️ Settings</h3>
+                      <p>
+                        Click the gear icon to configure your AI provider and model preferences for both 
+                        persona generation and chat conversations.
+                      </p>
+                    </section>
+                  </div>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
             <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
               <Settings className="h-4 w-4" />
             </Button>
