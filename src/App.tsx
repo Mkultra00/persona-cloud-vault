@@ -95,17 +95,13 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>;
-  if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/" element={<Dashboard />} />
       <Route path="/create" element={<ProtectedRoute><CreatePersona /></ProtectedRoute>} />
       <Route path="/persona/:id" element={<ProtectedRoute><PersonaDetail /></ProtectedRoute>} />
       <Route path="/chat/:personaId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
