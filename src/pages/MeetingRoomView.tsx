@@ -1,4 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+
+const formatMarkdown = (text: string): string => {
+  return text
+    .replace(/^### (.+)$/gm, '<strong class="block mt-2 mb-1">$1</strong>')
+    .replace(/^## (.+)$/gm, '<strong class="block text-base mt-3 mb-1">$1</strong>')
+    .replace(/^# (.+)$/gm, '<strong class="block text-lg mt-3 mb-1">$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^- (.+)$/gm, '<span class="block pl-4">• $1</span>');
+};
 import { useParams, useNavigate } from "react-router-dom";
 import { useMeetingRoom } from "@/hooks/useMeetingRoom";
 import { useRoomPersonas } from "@/hooks/useRoomPersonas";
@@ -258,7 +267,7 @@ export default function MeetingRoomView() {
                       {new Date(msg.created_at).toLocaleTimeString()}
                     </span>
                   </div>
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  <div className="text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
 
                   {showThoughts && msg.inner_thought && (
                     <Collapsible defaultOpen>
