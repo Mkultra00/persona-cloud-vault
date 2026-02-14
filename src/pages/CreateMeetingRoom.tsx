@@ -25,14 +25,16 @@ export default function CreateMeetingRoom() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const config = (location.state as any)?.importedConfig;
+    const state = location.state as any;
+    const config = state?.importedConfig || state?.cloneConfig;
     if (config) {
       setName(config.name || "");
       setScenario(config.scenario || "");
       setPurpose(config.purpose || "");
       setUserRole(config.user_role || "observer");
       if (config.duration_minutes) setDurationMinutes(config.duration_minutes);
-      toast({ title: "Room config imported — select participants to continue" });
+      if (config.persona_ids?.length) setSelectedIds(config.persona_ids);
+      toast({ title: state?.cloneConfig ? "Room cloned — edit details and create" : "Room config imported — select participants to continue" });
     }
   }, [location.state]);
 

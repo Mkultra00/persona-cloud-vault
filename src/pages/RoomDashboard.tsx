@@ -12,11 +12,28 @@ import logoImg from "@/assets/logo.png";
 
 export default function RoomDashboard() {
   const { data: personas, isLoading: personasLoading, importPersona, deletePersona } = useRoomPersonas();
-  const { data: rooms, isLoading: roomsLoading, cloneRoom, deleteRoom } = useMeetingRooms();
+  const { data: rooms, isLoading: roomsLoading, deleteRoom } = useMeetingRooms();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const roomImportRef = useRef<HTMLInputElement>(null);
+
+  const handleCloneRoom = async (r: any) => {
+    const { data: participants } = await (await import("@/integrations/supabase/client")).supabase
+      .from("room_participants").select("persona_id").eq("room_id", r.id).is("removed_at", null);
+    navigate("/rooms/create", {
+      state: {
+        cloneConfig: {
+          name: `${r.name} (Copy)`,
+          scenario: r.scenario,
+          purpose: r.purpose,
+          user_role: r.user_role,
+          duration_minutes: r.duration_minutes,
+          persona_ids: (participants || []).map((p: any) => p.persona_id),
+        },
+      },
+    });
+  };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -243,7 +260,7 @@ export default function RoomDashboard() {
                     <p className="text-sm text-muted-foreground line-clamp-2">{r.scenario}</p>
                     <div className="flex items-center justify-between mt-2">
                       <Badge variant="outline" className="text-xs">{r.user_role}</Badge>
-                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); cloneRoom.mutate(r); }} className="gap-1 text-xs">
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleCloneRoom(r); }} className="gap-1 text-xs">
                         <Copy className="h-3 w-3" /> Clone
                       </Button>
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
@@ -276,7 +293,7 @@ export default function RoomDashboard() {
                   <CardContent>
                     <p className="text-sm text-muted-foreground line-clamp-2">{r.scenario}</p>
                     <div className="flex justify-end mt-2">
-                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); cloneRoom.mutate(r); }} className="gap-1 text-xs">
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleCloneRoom(r); }} className="gap-1 text-xs">
                         <Copy className="h-3 w-3" /> Clone
                       </Button>
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
