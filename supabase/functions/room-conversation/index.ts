@@ -168,7 +168,7 @@ serve(async (req) => {
         .eq("room_id", room_id).is("removed_at", null);
       if (!participants?.length) throw new Error("No participants");
 
-      const personaIds = participants.map((p: any) => p.persona_id);
+      const personaIds = participants.map((p: any) => p.persona_id).sort();
 
       // Get conversation history
       const { data: history } = await supabase
