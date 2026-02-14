@@ -149,11 +149,14 @@ serve(async (req) => {
         return new Response(JSON.stringify({ ok: false, error: "Room is not active" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Check if meeting duration has expired
+      // Check if meeting duration has expired (accelerated clock: 6x speed)
+      const TIME_MULTIPLIER = 6;
       if (room.started_at && room.duration_minutes) {
         const startedAt = new Date(room.started_at).getTime();
+        const realElapsedMs = Date.now() - startedAt;
+        const simulatedElapsedMs = realElapsedMs * TIME_MULTIPLIER;
         const durationMs = room.duration_minutes * 60 * 1000;
-        if (Date.now() - startedAt >= durationMs) {
+        if (simulatedElapsedMs >= durationMs) {
           await supabase.from("room_messages").insert({ room_id, role: "system", content: "⏰ Meeting duration has expired." });
           const summaryContent = await generateSummary(supabase, room, room_id, " (Time Expired)");
           await supabase.from("meeting_rooms").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", room_id);
@@ -199,10 +202,11 @@ serve(async (req) => {
       // Calculate remaining time info
       let timeInfo = "";
       if (room.started_at && room.duration_minutes) {
-        const elapsed = Math.floor((Date.now() - new Date(room.started_at).getTime()) / 60000);
-        const remaining = Math.max(0, room.duration_minutes - elapsed);
-        const pct = Math.round((elapsed / room.duration_minutes) * 100);
-        timeInfo = `\n- Total meeting duration: ${room.duration_minutes} minutes\n- Elapsed: ~${elapsed} min (${pct}%)\n- Time remaining: ~${remaining} minutes`;
+        const realElapsedMin = (Date.now() - new Date(room.started_at).getTime()) / 60000;
+        const simulatedElapsed = Math.floor(realElapsedMin * TIME_MULTIPLIER);
+        const remaining = Math.max(0, room.duration_minutes - simulatedElapsed);
+        const pct = Math.round((simulatedElapsed / room.duration_minutes) * 100);
+        timeInfo = `\n- Total meeting duration: ${room.duration_minutes} minutes\n- Elapsed: ~${simulatedElapsed} min (${pct}%)\n- Time remaining: ~${remaining} minutes`;
         if (remaining <= 2) timeInfo += "\n- ⚠️ Meeting is about to end! Wrap up your thoughts and offer closing remarks.";
         else if (pct >= 75) timeInfo += "\n- The meeting is nearing its end. Start wrapping up key points.";
       }
