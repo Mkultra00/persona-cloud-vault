@@ -48,8 +48,98 @@ serve(async (req) => {
     }
 
     if (action === "end") {
+      // Generate summary before ending
+      const { data: history } = await supabase
+        .from("room_messages")
+        .select("*")
+        .eq("room_id", room_id)
+        .order("created_at", { ascending: true })
+        .limit(200);
+
+      // Get participant names
+      const { data: parts } = await supabase
+        .from("room_participants")
+        .select("persona_id")
+        .eq("room_id", room_id);
+      const pIds = (parts || []).map(p => p.persona_id);
+      const { data: allP } = await supabase
+        .from("room_personas")
+        .select("id, identity")
+        .in("id", pIds);
+      const nameMap: Record<string, string> = {};
+      (allP || []).forEach((p: any) => {
+        const id = p.identity as any;
+        nameMap[p.id] = `${id?.firstName || ""} ${id?.lastName || ""}`.trim() || "Unknown";
+      });
+
+      // Build transcript for summary
+      const transcript = (history || []).map(m => {
+        if (m.role === "system") return `[System]: ${m.content}`;
+        if (m.role === "moderator") return `[Moderator]: ${m.content}`;
+        if (m.role === "facilitator") return `[Facilitator]: ${m.content}`;
+        return `[${nameMap[m.persona_id] || "Unknown"}]: ${m.content}`;
+      }).join("\n");
+
+      let summaryContent = "🏁 Meeting ended.";
+
+      try {
+        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+        if (LOVABLE_API_KEY && transcript.length > 0) {
+          const summaryResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                {
+                  role: "system",
+                  content: `You are a meeting summarizer. Given a meeting transcript, produce a clear, structured summary with the following sections:
+
+## 📋 Meeting Summary
+
+### Participants
+List participants.
+
+### Key Discussion Points
+Bullet the main topics discussed.
+
+### Notable Moments
+Highlight any strong reactions, disagreements, or breakthroughs.
+
+### Outcomes & Conclusions
+Summarize what was resolved or left open.
+
+### Tone & Dynamics
+Briefly describe the overall tone and interpersonal dynamics.
+
+Keep the summary concise but thorough. Use markdown formatting.`
+                },
+                {
+                  role: "user",
+                  content: `Meeting: "${room.name}"\nScenario: ${room.scenario}\nPurpose: ${room.purpose}\n\nTranscript:\n${transcript}`
+                },
+              ],
+            }),
+          });
+
+          if (summaryResp.ok) {
+            const summaryData = await summaryResp.json();
+            const summaryText = summaryData.choices?.[0]?.message?.content || "";
+            if (summaryText) {
+              summaryContent = `🏁 **Meeting Ended**\n\n${summaryText}`;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Summary generation error:", e);
+        // Fall back to simple end message
+      }
+
       await supabase.from("meeting_rooms").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", room_id);
-      await supabase.from("room_messages").insert({ room_id, role: "system", content: "🏁 Meeting ended." });
+      await supabase.from("room_messages").insert({ room_id, role: "system", content: summaryContent });
       return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
