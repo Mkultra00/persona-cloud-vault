@@ -17,6 +17,8 @@ export interface MeetingRoom {
   purpose: string;
   status: "pending" | "active" | "paused" | "ended";
   user_role: "observer" | "moderator" | "facilitator";
+  duration_minutes: number;
+  started_at: string | null;
   created_by: string | null;
   created_at: string;
   ended_at: string | null;

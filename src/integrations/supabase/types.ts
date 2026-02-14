@@ -98,33 +98,39 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          duration_minutes: number
           ended_at: string | null
           id: string
           name: string
           purpose: string
           scenario: string
+          started_at: string | null
           status: string
           user_role: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          duration_minutes?: number
           ended_at?: string | null
           id?: string
           name: string
           purpose?: string
           scenario?: string
+          started_at?: string | null
           status?: string
           user_role?: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          duration_minutes?: number
           ended_at?: string | null
           id?: string
           name?: string
           purpose?: string
           scenario?: string
+          started_at?: string | null
           status?: string
           user_role?: string
         }

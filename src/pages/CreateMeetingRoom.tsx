@@ -21,6 +21,7 @@ export default function CreateMeetingRoom() {
   const [scenario, setScenario] = useState("");
   const [purpose, setPurpose] = useState("");
   const [userRole, setUserRole] = useState("observer");
+  const [durationMinutes, setDurationMinutes] = useState(30);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function CreateMeetingRoom() {
       setScenario(config.scenario || "");
       setPurpose(config.purpose || "");
       setUserRole(config.user_role || "observer");
+      if (config.duration_minutes) setDurationMinutes(config.duration_minutes);
       toast({ title: "Room config imported — select participants to continue" });
     }
   }, [location.state]);
@@ -48,7 +50,7 @@ export default function CreateMeetingRoom() {
     if (selectedIds.length < 2) { toast({ title: "Select at least 2 personas", variant: "destructive" }); return; }
     
     const room = await createRoom.mutateAsync({
-      name, scenario, purpose, user_role: userRole, persona_ids: selectedIds,
+      name, scenario, purpose, user_role: userRole, duration_minutes: durationMinutes, persona_ids: selectedIds,
     });
     navigate(`/rooms/meeting/${room.id}`);
   };
@@ -90,6 +92,22 @@ export default function CreateMeetingRoom() {
                   <SelectItem value="observer">Observer — Watch only, see inner thoughts</SelectItem>
                   <SelectItem value="moderator">Moderator — Control the flow</SelectItem>
                   <SelectItem value="facilitator">Facilitator — Participate in conversation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="duration">Meeting Duration (minutes)</Label>
+              <Select value={String(durationMinutes)} onValueChange={v => setDurationMinutes(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 minutes</SelectItem>
+                  <SelectItem value="10">10 minutes</SelectItem>
+                  <SelectItem value="15">15 minutes</SelectItem>
+                  <SelectItem value="30">30 minutes</SelectItem>
+                  <SelectItem value="45">45 minutes</SelectItem>
+                  <SelectItem value="60">1 hour</SelectItem>
+                  <SelectItem value="90">1.5 hours</SelectItem>
+                  <SelectItem value="120">2 hours</SelectItem>
                 </SelectContent>
               </Select>
             </div>
