@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Send, Loader2, Eye, EyeOff, Brain, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Eye, EyeOff, Brain, Paperclip, X, FileText, Image as ImageIcon, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { Persona, Message } from "@/lib/types";
 
@@ -295,15 +295,45 @@ export default function Chat() {
               <p className="text-xs text-muted-foreground">{identity?.occupation}</p>
             </div>
           </div>
-          <Button
-            variant={showThoughts ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowThoughts(!showThoughts)}
-            className="gap-1"
-          >
-            <Brain className="h-3 w-3" />
-            {showThoughts ? "Hide" : "Show"} Thoughts
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const exportData = {
+                  persona: personaName,
+                  conversationId,
+                  exportedAt: new Date().toISOString(),
+                  messages: messages.map((m) => ({
+                    role: m.role,
+                    content: m.content,
+                    inner_thought: m.inner_thought,
+                    created_at: m.created_at,
+                  })),
+                };
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `chat-${personaName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="gap-1"
+              disabled={messages.length === 0}
+            >
+              <Download className="h-3 w-3" /> Export Chat
+            </Button>
+            <Button
+              variant={showThoughts ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowThoughts(!showThoughts)}
+              className="gap-1"
+            >
+              <Brain className="h-3 w-3" />
+              {showThoughts ? "Hide" : "Show"} Thoughts
+            </Button>
+          </div>
         </div>
       </header>
 
