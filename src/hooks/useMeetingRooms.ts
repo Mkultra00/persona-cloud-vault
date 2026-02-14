@@ -78,5 +78,19 @@ export function useMeetingRooms() {
     },
   });
 
-  return { ...query, createRoom, cloneRoom };
+  const deleteRoom = useMutation({
+    mutationFn: async (roomId: string) => {
+      const { error } = await supabase.from("meeting_rooms").delete().eq("id", roomId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meeting_rooms"] });
+      toast({ title: "Room deleted" });
+    },
+    onError: (e: any) => {
+      toast({ title: "Failed to delete room", description: e.message, variant: "destructive" });
+    },
+  });
+
+  return { ...query, createRoom, cloneRoom, deleteRoom };
 }
