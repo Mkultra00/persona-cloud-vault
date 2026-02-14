@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Plus, Users, MessageSquare, Settings, LogOut, Trash2, Eye } from "lucide-react";
+import { Upload, Plus, Users, MessageSquare, Settings, LogOut, Trash2, Eye, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import logoImg from "@/assets/logo.png";
@@ -51,13 +51,18 @@ export default function RoomDashboard() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex justify-end gap-2 mb-4">
+          <div className="flex justify-between items-center mb-4">
+            <Button variant="ghost" onClick={() => navigate("/")} className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Persona Generator
+            </Button>
+            <div className="flex gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
               <Settings className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>
+            </div>
           </div>
           <div className="flex flex-col items-center gap-2">
             <img src={logoImg} alt="Logo" className="h-32 w-32 rounded-2xl" />
