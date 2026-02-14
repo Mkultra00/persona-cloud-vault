@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Plus, Users, MessageSquare, Settings, LogOut, Trash2, Eye, ArrowLeft } from "lucide-react";
+import { Upload, Plus, Users, MessageSquare, Settings, LogOut, Trash2, Eye, ArrowLeft, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import logoImg from "@/assets/logo.png";
@@ -16,6 +16,7 @@ export default function RoomDashboard() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const roomImportRef = useRef<HTMLInputElement>(null);
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -25,6 +26,45 @@ export default function RoomDashboard() {
       try {
         const data = JSON.parse(ev.target?.result as string);
         importPersona.mutate(data);
+      } catch {
+        toast({ title: "Invalid JSON file", variant: "destructive" });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const exportRoomConfig = (room: any) => {
+    const config = {
+      type: "meeting_room_config",
+      name: room.name,
+      scenario: room.scenario,
+      purpose: room.purpose,
+      user_role: room.user_role,
+      exported_at: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `room-${room.name.replace(/\s+/g, "-").toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Room config exported" });
+  };
+
+  const handleRoomImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (data.type !== "meeting_room_config" || !data.name) {
+          toast({ title: "Invalid room config file", variant: "destructive" });
+          return;
+        }
+        navigate("/rooms/create", { state: { importedConfig: data } });
       } catch {
         toast({ title: "Invalid JSON file", variant: "destructive" });
       }
@@ -94,12 +134,16 @@ export default function RoomDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-foreground">Imported Personas</h2>
             <div className="flex gap-2">
+              <Button variant="outline" onClick={() => roomImportRef.current?.click()} className="gap-2">
+                <Upload className="h-4 w-4" /> Import Room
+              </Button>
               <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
                 <Upload className="h-4 w-4" /> Import Persona
               </Button>
               <Button onClick={() => navigate("/rooms/create")} className="gap-2">
                 <Plus className="h-4 w-4" /> Create Room
               </Button>
+              <input ref={roomImportRef} type="file" accept=".json" className="hidden" onChange={handleRoomImport} />
               <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
             </div>
           </div>
@@ -154,8 +198,8 @@ export default function RoomDashboard() {
             <h2 className="text-2xl font-bold text-foreground mb-4">Active Meetings</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {activeRooms.map(r => (
-                <Card key={r.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate(`/rooms/meeting/${r.id}`)}>
-                  <CardHeader className="pb-2">
+                <Card key={r.id} className="hover:border-primary/30 transition-colors">
+                  <CardHeader className="pb-2 cursor-pointer" onClick={() => navigate(`/rooms/meeting/${r.id}`)}>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base">{r.name}</CardTitle>
                       <Badge variant={statusColor(r.status)}>{r.status}</Badge>
@@ -163,8 +207,11 @@ export default function RoomDashboard() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground line-clamp-2">{r.scenario}</p>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                      <Badge variant="outline">{r.user_role}</Badge>
+                    <div className="flex items-center justify-between mt-2">
+                      <Badge variant="outline" className="text-xs">{r.user_role}</Badge>
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
+                        <Download className="h-3 w-3" /> Export
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -179,8 +226,8 @@ export default function RoomDashboard() {
             <h2 className="text-2xl font-bold text-foreground mb-4">Meeting History</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {pastRooms.map(r => (
-                <Card key={r.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate(`/rooms/meeting/${r.id}`)}>
-                  <CardHeader className="pb-2">
+                <Card key={r.id} className="hover:border-primary/30 transition-colors">
+                  <CardHeader className="pb-2 cursor-pointer" onClick={() => navigate(`/rooms/meeting/${r.id}`)}>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base">{r.name}</CardTitle>
                       <Badge variant="outline">ended</Badge>
@@ -188,6 +235,11 @@ export default function RoomDashboard() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground line-clamp-2">{r.scenario}</p>
+                    <div className="flex justify-end mt-2">
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
+                        <Download className="h-3 w-3" /> Export
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
