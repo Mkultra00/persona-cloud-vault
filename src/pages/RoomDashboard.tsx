@@ -12,7 +12,7 @@ import logoImg from "@/assets/logo.png";
 
 export default function RoomDashboard() {
   const { data: personas, isLoading: personasLoading, importPersona, deletePersona } = useRoomPersonas();
-  const { data: rooms, isLoading: roomsLoading, cloneRoom } = useMeetingRooms();
+  const { data: rooms, isLoading: roomsLoading, cloneRoom, deleteRoom } = useMeetingRooms();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -215,6 +215,9 @@ export default function RoomDashboard() {
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
                         <Download className="h-3 w-3" /> Export
                       </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive gap-1 text-xs" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this room?")) deleteRoom.mutate(r.id); }}>
+                        <Trash2 className="h-3 w-3" /> Delete
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -244,6 +247,9 @@ export default function RoomDashboard() {
                       </Button>
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
                         <Download className="h-3 w-3" /> Export
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive gap-1 text-xs" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this room?")) deleteRoom.mutate(r.id); }}>
+                        <Trash2 className="h-3 w-3" /> Delete
                       </Button>
                     </div>
                   </CardContent>
