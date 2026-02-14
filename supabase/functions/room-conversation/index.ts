@@ -306,7 +306,12 @@ INNER_THOUGHT: [Your private inner thoughts about what's happening]`;
       let innerThought: string | null = null;
       const responseMatch = rawContent.match(/RESPONSE:\s*([\s\S]*?)(?=INNER_THOUGHT:|$)/i);
       const thoughtMatch = rawContent.match(/INNER_THOUGHT:\s*([\s\S]*?)$/i);
-      if (responseMatch) content = responseMatch[1].trim();
+      if (responseMatch) {
+        content = responseMatch[1].trim();
+      } else if (thoughtMatch) {
+        // No RESPONSE: prefix — strip INNER_THOUGHT from the dialogue
+        content = rawContent.slice(0, thoughtMatch.index).trim();
+      }
       if (thoughtMatch) innerThought = thoughtMatch[1].trim();
 
       const { data: savedMsg } = await supabase.from("room_messages").insert({
