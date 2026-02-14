@@ -30,14 +30,46 @@ export function usePersonas() {
   });
 
   const importPersonas = useMutation({
-    mutationFn: async (personas: any[]) => {
+    mutationFn: async (rawData: any) => {
       const user = (await supabase.auth.getUser()).data.user;
-      const toInsert = personas.map((p: any) => {
+
+      // Detect full export format (single persona with conversations)
+      const isFullExport = rawData.persona && rawData.exportedAt;
+      const personaList = isFullExport ? [rawData.persona] : (Array.isArray(rawData) ? rawData : [rawData]);
+      const conversationsList = isFullExport ? rawData.conversations || [] : [];
+
+      for (const p of personaList) {
         const identity = { ...(p.identity || {}) };
-        // Randomize name suffix to ensure uniqueness
         const suffix = Math.random().toString(36).substring(2, 5).toUpperCase();
         if (identity.firstName) identity.firstName = `${identity.firstName}-${suffix}`;
-        return {
+
+        // Restore portrait from base64 if available
+        let portraitUrl: string | null = null;
+        if (p.portrait_base64) {
+          try {
+            const base64 = p.portrait_base64;
+            const mimeMatch = base64.match(/data:(.*?);base64,/);
+            const mime = mimeMatch?.[1] || "image/png";
+            const ext = mime.split("/")[1] || "png";
+            const byteString = atob(base64.split(",")[1]);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+            const blob = new Blob([ab], { type: mime });
+            const fileName = `imported-${Date.now()}-${suffix}.${ext}`;
+            const { data: uploadData } = await supabase.storage
+              .from("portraits")
+              .upload(fileName, blob, { contentType: mime });
+            if (uploadData?.path) {
+              const { data: urlData } = supabase.storage.from("portraits").getPublicUrl(uploadData.path);
+              portraitUrl = urlData.publicUrl;
+            }
+          } catch {
+            // Portrait upload failed, continue without it
+          }
+        }
+
+        const { data: inserted, error } = await supabase.from("personas").insert({
           generation_prompt: p.generation_prompt || "",
           testing_purpose: p.testing_purpose || "",
           variance_level: p.variance_level || 5,
@@ -45,17 +77,42 @@ export function usePersonas() {
           psychology: p.psychology || {},
           backstory: p.backstory || {},
           memory: p.memory || {},
-          portrait_url: null, // Force new portrait generation
+          portrait_url: portraitUrl,
           status: "active",
           created_by: user?.id,
-        };
-      });
-      const { error } = await supabase.from("personas").insert(toInsert);
-      if (error) throw error;
+        }).select("id").single();
+        if (error) throw error;
+
+        // Restore conversations and messages
+        if (inserted && conversationsList.length > 0) {
+          for (const conv of conversationsList) {
+            const { data: newConv, error: convErr } = await supabase.from("conversations").insert({
+              persona_id: inserted.id,
+              user_id: user?.id,
+              status: conv.status || "ended",
+              session_summary: conv.session_summary,
+              started_at: conv.started_at,
+              ended_at: conv.ended_at,
+            }).select("id").single();
+            if (convErr || !newConv) continue;
+
+            const msgs = (conv.messages || []).map((m: any) => ({
+              conversation_id: newConv.id,
+              role: m.role,
+              content: m.content,
+              inner_thought: m.inner_thought || null,
+              created_at: m.created_at,
+            }));
+            if (msgs.length > 0) {
+              await supabase.from("messages").insert(msgs);
+            }
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["personas"] });
-      toast({ title: "Personas imported successfully" });
+      toast({ title: "Persona imported successfully (with chat history & portrait)" });
     },
     onError: (e: any) => {
       toast({ title: "Import failed", description: e.message, variant: "destructive" });

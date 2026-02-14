@@ -38,8 +38,7 @@ export default function Dashboard() {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target?.result as string);
-        const arr = Array.isArray(data) ? data : [data];
-        importPersonas.mutate(arr);
+        importPersonas.mutate(data);
       } catch {
         toast({ title: "Invalid JSON file", variant: "destructive" });
       }
