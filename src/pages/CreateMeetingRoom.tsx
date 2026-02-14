@@ -94,8 +94,7 @@ export default function CreateMeetingRoom() {
             ) : (
               <div className="space-y-3">
                 {personas.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors cursor-pointer"
-                    onClick={() => togglePersona(p.id)}>
+                  <label key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors cursor-pointer">
                     <Checkbox checked={selectedIds.includes(p.id)} onCheckedChange={() => togglePersona(p.id)} />
                     {p.portrait_url ? (
                       <img src={p.portrait_url} alt={getName(p)} className="h-8 w-8 rounded-full object-cover border border-border" />
@@ -106,7 +105,7 @@ export default function CreateMeetingRoom() {
                       <p className="font-medium text-sm">{getName(p)}</p>
                       <p className="text-xs text-muted-foreground">{(p.identity as any)?.occupation || "—"}</p>
                     </div>
-                  </div>
+                  </label>
                 ))}
               </div>
             )}
