@@ -78,6 +78,7 @@ export default function RoomDashboard() {
     return id?.firstName && id?.lastName ? `${id.firstName} ${id.lastName}` : "Unnamed";
   };
 
+  const pendingRooms = rooms?.filter(r => r.status === "pending") || [];
   const activeRooms = rooms?.filter(r => r.status === "active" || r.status === "paused") || [];
   const pastRooms = rooms?.filter(r => r.status === "ended") || [];
 
@@ -191,6 +192,39 @@ export default function RoomDashboard() {
             </div>
           )}
         </section>
+
+        {/* Pending Rooms */}
+        {pendingRooms.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold text-foreground mb-4">Pending Rooms</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pendingRooms.map(r => (
+                <Card key={r.id} className="hover:border-primary/30 transition-colors">
+                  <CardHeader className="pb-2 cursor-pointer" onClick={() => navigate(`/rooms/meeting/${r.id}`)}>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">{r.name}</CardTitle>
+                      <Badge variant="secondary">pending</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{r.scenario}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <Badge variant="outline" className="text-xs">{r.user_role}</Badge>
+                      <div className="flex">
+                        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
+                          <Download className="h-3 w-3" /> Export
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive gap-1 text-xs" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this room?")) deleteRoom.mutate(r.id); }}>
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Active Rooms */}
         {activeRooms.length > 0 && (
