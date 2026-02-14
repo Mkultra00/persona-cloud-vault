@@ -157,11 +157,11 @@ serve(async (req) => {
         const simulatedElapsedMs = realElapsedMs * TIME_MULTIPLIER;
         const durationMs = room.duration_minutes * 60 * 1000;
         if (simulatedElapsedMs >= durationMs) {
-          await supabase.from("room_messages").insert({ room_id, role: "system", content: "⏰ Meeting duration has expired." });
+          await supabase.from("room_messages").insert({ room_id, role: "system", content: "⏰ Time expired. Generating final analysis..." });
           const summaryContent = await generateSummary(supabase, room, room_id, " (Time Expired)");
           await supabase.from("meeting_rooms").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", room_id);
           await supabase.from("room_messages").insert({ room_id, role: "system", content: summaryContent });
-          return new Response(JSON.stringify({ ok: false, ended: true, error: "Meeting duration expired" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ ok: true, ended: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
 
