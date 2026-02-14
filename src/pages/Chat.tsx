@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Send, Loader2, Eye, EyeOff, Brain, Paperclip, X, FileText, Image as ImageIcon, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { Persona, Message } from "@/lib/types";
+import { downloadFullPersonaExport } from "@/lib/exportPersona";
 
 interface Attachment {
   file: File;
@@ -299,30 +300,18 @@ export default function Chat() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const exportData = {
-                  persona: personaName,
-                  conversationId,
-                  exportedAt: new Date().toISOString(),
-                  messages: messages.map((m) => ({
-                    role: m.role,
-                    content: m.content,
-                    inner_thought: m.inner_thought,
-                    created_at: m.created_at,
-                  })),
-                };
-                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `chat-${personaName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
+              onClick={async () => {
+                if (!persona) return;
+                try {
+                  await downloadFullPersonaExport(persona);
+                  toast({ title: "Full export downloaded" });
+                } catch {
+                  toast({ title: "Export failed", variant: "destructive" });
+                }
               }}
               className="gap-1"
-              disabled={messages.length === 0}
             >
-              <Download className="h-3 w-3" /> Export Chat
+              <Download className="h-3 w-3" /> Export
             </Button>
             <Button
               variant={showThoughts ? "default" : "outline"}
