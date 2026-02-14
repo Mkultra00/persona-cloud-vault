@@ -110,6 +110,7 @@ export default function MeetingRoomView() {
                 </Badge>
                 <span>Role: {room.user_role}</span>
                 <span>• {participants.length} participants</span>
+                <span>• {room.duration_minutes} min</span>
               </div>
             </div>
           </div>

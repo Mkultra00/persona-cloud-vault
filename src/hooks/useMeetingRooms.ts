@@ -21,7 +21,7 @@ export function useMeetingRooms() {
   const createRoom = useMutation({
     mutationFn: async (params: {
       name: string; scenario: string; purpose: string;
-      user_role: string; persona_ids: string[];
+      user_role: string; duration_minutes: number; persona_ids: string[];
     }) => {
       const user = (await supabase.auth.getUser()).data.user;
       const { data: room, error } = await supabase.from("meeting_rooms").insert({
@@ -29,6 +29,7 @@ export function useMeetingRooms() {
         scenario: params.scenario,
         purpose: params.purpose,
         user_role: params.user_role,
+        duration_minutes: params.duration_minutes,
         created_by: user?.id,
         status: "pending",
       } as any).select("*").single();

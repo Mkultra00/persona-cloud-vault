@@ -107,8 +107,12 @@ export function useMeetingRoom(roomId: string) {
     setIsGenerating(true);
     try {
       const result = await callAction("next_turn");
-      if (!result?.ok) {
+      if (!result?.ok || result?.ended) {
         autoRunRef.current = false;
+        if (result?.ended) {
+          queryClient.invalidateQueries({ queryKey: ["meeting_room", roomId] });
+        }
+        setIsGenerating(false);
         return;
       }
     } catch {
@@ -121,7 +125,7 @@ export function useMeetingRoom(roomId: string) {
     if (autoRunRef.current) {
       timerRef.current = window.setTimeout(generateNextTurnLoop, 3000);
     }
-  }, [callAction]);
+  }, [callAction, roomId]);
 
   const pauseMeeting = useCallback(async () => {
     autoRunRef.current = false;
