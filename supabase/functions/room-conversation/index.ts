@@ -200,8 +200,11 @@ serve(async (req) => {
       let timeInfo = "";
       if (room.started_at && room.duration_minutes) {
         const elapsed = Math.floor((Date.now() - new Date(room.started_at).getTime()) / 60000);
-        const remaining = room.duration_minutes - elapsed;
-        timeInfo = `\n- Time remaining: approximately ${remaining} minutes`;
+        const remaining = Math.max(0, room.duration_minutes - elapsed);
+        const pct = Math.round((elapsed / room.duration_minutes) * 100);
+        timeInfo = `\n- Total meeting duration: ${room.duration_minutes} minutes\n- Elapsed: ~${elapsed} min (${pct}%)\n- Time remaining: ~${remaining} minutes`;
+        if (remaining <= 2) timeInfo += "\n- ⚠️ Meeting is about to end! Wrap up your thoughts and offer closing remarks.";
+        else if (pct >= 75) timeInfo += "\n- The meeting is nearing its end. Start wrapping up key points.";
       }
 
       const systemPrompt = `You are ${personaName}, a character in a meeting room discussion. Stay fully in character.
