@@ -14,6 +14,10 @@ import PersonaDetail from "./pages/PersonaDetail";
 import Chat from "./pages/Chat";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import RoomDashboard from "./pages/RoomDashboard";
+import CreateMeetingRoom from "./pages/CreateMeetingRoom";
+import MeetingRoomView from "./pages/MeetingRoomView";
+import RoomPersonaDetail from "./pages/RoomPersonaDetail";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +110,10 @@ function AppRoutes() {
       <Route path="/persona/:id" element={<ProtectedRoute><PersonaDetail /></ProtectedRoute>} />
       <Route path="/chat/:personaId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/rooms" element={<ProtectedRoute><RoomDashboard /></ProtectedRoute>} />
+      <Route path="/rooms/create" element={<ProtectedRoute><CreateMeetingRoom /></ProtectedRoute>} />
+      <Route path="/rooms/meeting/:roomId" element={<ProtectedRoute><MeetingRoomView /></ProtectedRoute>} />
+      <Route path="/rooms/persona/:personaId" element={<ProtectedRoute><RoomPersonaDetail /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

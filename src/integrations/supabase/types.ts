@@ -94,6 +94,42 @@ export type Database = {
           },
         ]
       }
+      meeting_rooms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ended_at: string | null
+          id: string
+          name: string
+          purpose: string
+          scenario: string
+          status: string
+          user_role: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          id?: string
+          name: string
+          purpose?: string
+          scenario?: string
+          status?: string
+          user_role?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          id?: string
+          name?: string
+          purpose?: string
+          scenario?: string
+          status?: string
+          user_role?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -213,6 +249,126 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      room_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          inner_thought: string | null
+          persona_id: string | null
+          role: string
+          room_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          inner_thought?: string | null
+          persona_id?: string | null
+          role?: string
+          room_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          inner_thought?: string | null
+          persona_id?: string | null
+          role?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_messages_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "room_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_participants: {
+        Row: {
+          admitted_at: string
+          id: string
+          persona_id: string
+          removed_at: string | null
+          room_id: string
+        }
+        Insert: {
+          admitted_at?: string
+          id?: string
+          persona_id: string
+          removed_at?: string | null
+          room_id: string
+        }
+        Update: {
+          admitted_at?: string
+          id?: string
+          persona_id?: string
+          removed_at?: string | null
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_participants_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "room_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_personas: {
+        Row: {
+          backstory: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          identity: Json
+          memory: Json
+          portrait_url: string | null
+          psychology: Json
+          source_export: Json | null
+        }
+        Insert: {
+          backstory?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          identity?: Json
+          memory?: Json
+          portrait_url?: string | null
+          psychology?: Json
+          source_export?: Json | null
+        }
+        Update: {
+          backstory?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          identity?: Json
+          memory?: Json
+          portrait_url?: string | null
+          psychology?: Json
+          source_export?: Json | null
         }
         Relationships: []
       }
