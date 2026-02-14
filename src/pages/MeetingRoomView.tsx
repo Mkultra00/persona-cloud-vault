@@ -183,7 +183,7 @@ export default function MeetingRoomView() {
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
 
                   {showThoughts && msg.inner_thought && (
-                    <Collapsible>
+                    <Collapsible defaultOpen>
                       <CollapsibleTrigger className="text-xs text-muted-foreground mt-2 flex items-center gap-1 hover:text-foreground transition-colors">
                         <Brain className="h-3 w-3" /> Inner thought
                       </CollapsibleTrigger>
