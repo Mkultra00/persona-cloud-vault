@@ -54,5 +54,29 @@ export function useMeetingRooms() {
     },
   });
 
-  return { ...query, createRoom };
+  const cloneRoom = useMutation({
+    mutationFn: async (source: MeetingRoom) => {
+      const user = (await supabase.auth.getUser()).data.user;
+      const { data: room, error } = await supabase.from("meeting_rooms").insert({
+        name: `${source.name} (Copy)`,
+        scenario: source.scenario,
+        purpose: source.purpose,
+        user_role: source.user_role,
+        duration_minutes: source.duration_minutes,
+        created_by: user?.id,
+        status: "pending",
+      } as any).select("*").single();
+      if (error) throw error;
+      return room as unknown as MeetingRoom;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meeting_rooms"] });
+      toast({ title: "Room cloned successfully" });
+    },
+    onError: (e: any) => {
+      toast({ title: "Failed to clone room", description: e.message, variant: "destructive" });
+    },
+  });
+
+  return { ...query, createRoom, cloneRoom };
 }

@@ -5,14 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Plus, Users, MessageSquare, Settings, LogOut, Trash2, Eye, ArrowLeft, Download } from "lucide-react";
+import { Upload, Plus, Users, MessageSquare, Settings, LogOut, Trash2, Eye, ArrowLeft, Download, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import logoImg from "@/assets/logo.png";
 
 export default function RoomDashboard() {
   const { data: personas, isLoading: personasLoading, importPersona, deletePersona } = useRoomPersonas();
-  const { data: rooms, isLoading: roomsLoading } = useMeetingRooms();
+  const { data: rooms, isLoading: roomsLoading, cloneRoom } = useMeetingRooms();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -209,6 +209,9 @@ export default function RoomDashboard() {
                     <p className="text-sm text-muted-foreground line-clamp-2">{r.scenario}</p>
                     <div className="flex items-center justify-between mt-2">
                       <Badge variant="outline" className="text-xs">{r.user_role}</Badge>
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); cloneRoom.mutate(r); }} className="gap-1 text-xs">
+                        <Copy className="h-3 w-3" /> Clone
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
                         <Download className="h-3 w-3" /> Export
                       </Button>
@@ -236,6 +239,9 @@ export default function RoomDashboard() {
                   <CardContent>
                     <p className="text-sm text-muted-foreground line-clamp-2">{r.scenario}</p>
                     <div className="flex justify-end mt-2">
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); cloneRoom.mutate(r); }} className="gap-1 text-xs">
+                        <Copy className="h-3 w-3" /> Clone
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); exportRoomConfig(r); }} className="gap-1 text-xs">
                         <Download className="h-3 w-3" /> Export
                       </Button>
