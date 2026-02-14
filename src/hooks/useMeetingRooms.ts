@@ -67,6 +67,21 @@ export function useMeetingRooms() {
         status: "pending",
       } as any).select("*").single();
       if (error) throw error;
+
+      // Copy participants from source room
+      const { data: srcParticipants } = await supabase
+        .from("room_participants")
+        .select("persona_id")
+        .eq("room_id", source.id)
+        .is("removed_at", null);
+      if (srcParticipants?.length) {
+        const newParticipants = srcParticipants.map((p: any) => ({
+          room_id: (room as any).id,
+          persona_id: p.persona_id,
+        }));
+        await supabase.from("room_participants").insert(newParticipants as any);
+      }
+
       return room as unknown as MeetingRoom;
     },
     onSuccess: () => {
