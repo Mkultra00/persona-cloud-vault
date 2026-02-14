@@ -9,6 +9,7 @@ import type { Persona } from "@/lib/types";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { downloadFullPersonaExport } from "@/lib/exportPersona";
 
 export default function PersonaDetail() {
   const { id } = useParams();
@@ -46,16 +47,14 @@ export default function PersonaDetail() {
     enabled: !!id,
   });
 
-  const exportOne = () => {
+  const exportOne = async () => {
     if (!persona) return;
-    const blob = new Blob([JSON.stringify(persona, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const name = (persona.identity as any)?.firstName || "persona";
-    a.download = `${name.toLowerCase()}-persona.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      await downloadFullPersonaExport(persona);
+      toast({ title: "Persona exported" });
+    } catch {
+      toast({ title: "Export failed", variant: "destructive" });
+    }
   };
 
   if (isLoading) return <div className="flex min-h-screen items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;

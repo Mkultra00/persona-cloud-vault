@@ -10,6 +10,7 @@ import { Plus, Download, Upload, Settings, LogOut, MessageSquare, Trash2, Eye, B
 import { useNavigate } from "react-router-dom";
 import type { Persona } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
+import { downloadFullPersonaExport } from "@/lib/exportPersona";
 import logoImg from "@/assets/logo.png";
 
 export default function Dashboard() {
@@ -243,14 +244,13 @@ export default function Dashboard() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => {
-                        const blob = new Blob([JSON.stringify(p, null, 2)], { type: "application/json" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `${getPersonaName(p).toLowerCase().replace(/\s+/g, "-")}-persona.json`;
-                        a.click();
-                        URL.revokeObjectURL(url);
+                      onClick={async () => {
+                        try {
+                          await downloadFullPersonaExport(p);
+                          toast({ title: "Persona exported" });
+                        } catch {
+                          toast({ title: "Export failed", variant: "destructive" });
+                        }
                       }}
                     >
                       <Download className="h-3 w-3" />
