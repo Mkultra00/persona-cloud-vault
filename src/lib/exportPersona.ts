@@ -1,6 +1,22 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Persona } from "@/lib/types";
 
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function buildFullPersonaExport(persona: Persona) {
   // Fetch all conversations for this persona
   const { data: conversations } = await supabase
@@ -20,6 +36,11 @@ export async function buildFullPersonaExport(persona: Persona) {
       .order("created_at", { ascending: true });
     allMessages = msgs ?? [];
   }
+
+  // Fetch portrait as base64
+  const portraitBase64 = persona.portrait_url
+    ? await fetchImageAsBase64(persona.portrait_url)
+    : null;
 
   // Group messages by conversation
   const conversationsWithMessages = (conversations ?? []).map((conv) => ({
@@ -51,6 +72,7 @@ export async function buildFullPersonaExport(persona: Persona) {
       backstory: persona.backstory,
       memory: persona.memory,
       portrait_url: persona.portrait_url,
+      portrait_base64: portraitBase64,
       total_interactions: persona.total_interactions,
       created_at: persona.created_at,
     },
