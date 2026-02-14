@@ -243,6 +243,21 @@ export default function Dashboard() {
                     <Button
                       size="sm"
                       variant="ghost"
+                      onClick={() => {
+                        const blob = new Blob([JSON.stringify(p, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `${getPersonaName(p).toLowerCase().replace(/\s+/g, "-")}-persona.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       className="text-destructive hover:text-destructive"
                       onClick={() => deleteMutation.mutate(p.id)}
                     >
