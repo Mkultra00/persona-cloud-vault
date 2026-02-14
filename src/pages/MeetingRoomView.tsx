@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Play, Pause, Square, Send, Brain, UserMinus, Loader2, SkipForward } from "lucide-react";
+import { ArrowLeft, Play, Pause, Square, Send, Brain, UserMinus, Loader2, SkipForward, Download } from "lucide-react";
 import type { RoomPersona } from "@/lib/roomTypes";
+import { toast } from "@/hooks/use-toast";
 
 export default function MeetingRoomView() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -53,6 +54,36 @@ export default function MeetingRoomView() {
     } else if (room.user_role === "moderator") {
       await sendDirective(msg);
     }
+  };
+
+  const exportConversation = () => {
+    const transcript = messages.map(msg => ({
+      speaker: msg.role === "persona" ? getPersonaName(msg.persona_id) : msg.role,
+      role: msg.role,
+      content: msg.content,
+      inner_thought: msg.inner_thought || undefined,
+      timestamp: msg.created_at,
+    }));
+    const exportData = {
+      type: "meeting_conversation",
+      room_name: room.name,
+      scenario: room.scenario,
+      purpose: room.purpose,
+      participants: participants.map(p => {
+        const id = p.identity as any;
+        return `${id?.firstName || ""} ${id?.lastName || ""}`.trim();
+      }),
+      messages: transcript,
+      exported_at: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `conversation-${room.name.replace(/\s+/g, "-").toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Conversation exported" });
   };
 
   const roleColor = (role: string) => {
@@ -120,6 +151,11 @@ export default function MeetingRoomView() {
             <Button size="sm" variant="ghost" onClick={() => setShowThoughts(!showThoughts)} className="gap-1">
               <Brain className="h-3 w-3" /> {showThoughts ? "Hide" : "Show"} Thoughts
             </Button>
+            {messages.length > 0 && (
+              <Button size="sm" variant="ghost" onClick={exportConversation} className="gap-1">
+                <Download className="h-3 w-3" /> Save Chat
+              </Button>
+            )}
           </div>
         </div>
       </header>

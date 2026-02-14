@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useRoomPersonas } from "@/hooks/useRoomPersonas";
 import { useMeetingRooms } from "@/hooks/useMeetingRooms";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast";
 
 export default function CreateMeetingRoom() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: personas, isLoading } = useRoomPersonas();
   const { createRoom } = useMeetingRooms();
   const [name, setName] = useState("");
@@ -21,6 +22,17 @@ export default function CreateMeetingRoom() {
   const [purpose, setPurpose] = useState("");
   const [userRole, setUserRole] = useState("observer");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const config = (location.state as any)?.importedConfig;
+    if (config) {
+      setName(config.name || "");
+      setScenario(config.scenario || "");
+      setPurpose(config.purpose || "");
+      setUserRole(config.user_role || "observer");
+      toast({ title: "Room config imported — select participants to continue" });
+    }
+  }, [location.state]);
 
   const togglePersona = (id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
