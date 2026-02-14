@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Download, Upload, Settings, LogOut, MessageSquare, Trash2, Eye, BookOpen } from "lucide-react";
+import { Plus, Download, Upload, Settings, LogOut, MessageSquare, Trash2, Eye, BookOpen, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Persona } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
@@ -151,6 +151,9 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => navigate("/rooms")} variant="outline" className="gap-2">
+              <Users className="h-4 w-4" /> Social Room
+            </Button>
             <Button onClick={() => navigate("/create")} className="gap-2">
               <Plus className="h-4 w-4" /> Create New
             </Button>
