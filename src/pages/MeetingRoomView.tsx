@@ -155,8 +155,8 @@ export default function MeetingRoomView() {
         </aside>
 
         {/* Main chat area */}
-        <div className="flex-1 flex flex-col">
-          <ScrollArea className="flex-1 p-4">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-4 max-w-3xl mx-auto">
               {messages.map(msg => (
                 <div key={msg.id} className={`rounded-lg border p-3 ${roleColor(msg.role)}`}>
@@ -206,7 +206,7 @@ export default function MeetingRoomView() {
 
               <div ref={scrollRef} />
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Input (for moderator/facilitator) */}
           {room.status !== "ended" && room.user_role !== "observer" && (
