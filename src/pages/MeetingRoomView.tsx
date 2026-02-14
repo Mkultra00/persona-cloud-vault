@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMeetingRoom } from "@/hooks/useMeetingRoom";
+import { useRoomPersonas } from "@/hooks/useRoomPersonas";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Play, Pause, Square, Send, Brain, UserMinus, Loader2, SkipForward, Download } from "lucide-react";
+import { ArrowLeft, Play, Pause, Square, Send, Brain, UserMinus, UserPlus, Loader2, SkipForward, Download } from "lucide-react";
 import type { RoomPersona } from "@/lib/roomTypes";
 import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function MeetingRoomView() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -23,6 +26,26 @@ export default function MeetingRoomView() {
   const [input, setInput] = useState("");
   const [showThoughts, setShowThoughts] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { data: allPersonas } = useRoomPersonas();
+  const queryClient = useQueryClient();
+
+  // Personas not yet in this room
+  const availablePersonas = (allPersonas || []).filter(
+    p => !participants.some(part => part.id === p.id)
+  );
+
+  const addPersonaToRoom = async (personaId: string) => {
+    const { error } = await supabase.from("room_participants").insert({
+      room_id: roomId,
+      persona_id: personaId,
+    } as any);
+    if (error) {
+      toast({ title: "Failed to add persona", description: error.message, variant: "destructive" });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["room_participants", roomId] });
+      toast({ title: "Persona added" });
+    }
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -189,6 +212,24 @@ export default function MeetingRoomView() {
               );
             })}
           </div>
+
+          {/* Add persona to pending room */}
+          {room.status === "pending" && availablePersonas.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Add Persona</h3>
+              <div className="space-y-2">
+                {availablePersonas.map(p => {
+                  const id = p.identity as any;
+                  const name = `${id?.firstName || ""} ${id?.lastName || ""}`.trim() || "Unknown";
+                  return (
+                    <Button key={p.id} size="sm" variant="outline" className="w-full justify-start gap-2 text-xs" onClick={() => addPersonaToRoom(p.id)}>
+                      <UserPlus className="h-3 w-3" /> {name}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Main chat area */}
